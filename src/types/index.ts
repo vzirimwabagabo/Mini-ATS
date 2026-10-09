@@ -8,6 +8,8 @@ export type CandidateStage =
   | 'hired'
   | 'rejected';
 
+export type AppTheme = 'light' | 'dark' | 'midnight';
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -32,12 +34,19 @@ export interface Job {
 }
 
 export interface AICVEvaluation {
-  score: number; // 0 - 100
+  score: number; // Overall 0 - 100
   summary: string;
   strengths: string[];
   gaps: string[];
   recommendedStage: CandidateStage;
   evaluatedAt: string;
+  // Multi-dimensional AI breakdown
+  skillsMatch?: number; // 0 - 100
+  experienceMatch?: number; // 0 - 100
+  seniorityMatch?: number; // 0 - 100
+  cultureMatch?: number; // 0 - 100
+  tailoredInterviewQuestions?: string[];
+  draftOutreachEmail?: string;
 }
 
 export interface Candidate {

@@ -1,35 +1,32 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { 
   Shield, 
-  User, 
-  Building, 
   LogOut, 
   UserPlus, 
   Database, 
   HelpCircle, 
-  RotateCcw,
+  Sun,
+  Moon,
   Sparkles,
-  ChevronDown,
-  Briefcase
+  Zap
 } from 'lucide-react';
 
 interface NavbarProps {
   onOpenCreateAccount: () => void;
   onOpenAssumptions: () => void;
-  onOpenSupabaseSettings: () => void;
+  onOpenDatabaseWizard: () => void;
   onResetData: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenCreateAccount,
   onOpenAssumptions,
-  onOpenSupabaseSettings,
-  onResetData,
+  onOpenDatabaseWizard,
 }) => {
   const { 
     currentUser, 
-    effectiveUser, 
     impersonatedCustomer, 
     setImpersonatedCustomer, 
     allProfiles, 
@@ -38,26 +35,28 @@ export const Navbar: React.FC<NavbarProps> = ({
     switchUserRoleDemo
   } = useAuth();
 
+  const { theme, toggleTheme } = useTheme();
+
   const isAdmin = currentUser?.role === 'admin';
   const customerProfiles = allProfiles.filter((p) => p.role === 'customer');
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 transition-colors">
       {/* Amber banner if Admin is acting on behalf of a customer */}
       {isAdmin && impersonatedCustomer && (
-        <div className="bg-amber-500 text-slate-950 px-4 py-1.5 text-xs font-semibold flex items-center justify-between shadow-xs">
+        <div className="bg-amber-500 text-slate-950 px-4 py-1.5 text-xs font-bold flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2">
             <span className="bg-black/20 text-white px-2 py-0.5 rounded text-[10px] uppercase tracking-wide">
-              Admin Masquerade
+              Admin Delegation Active
             </span>
             <span>
-              You are acting on behalf of <strong>{impersonatedCustomer.companyName || impersonatedCustomer.fullName}</strong> ({impersonatedCustomer.email}). All actions are saved under this customer.
+              Acting on behalf of <strong>{impersonatedCustomer.companyName || impersonatedCustomer.fullName}</strong> ({impersonatedCustomer.email}). Jobs & candidates will be attributed to this customer.
             </span>
           </div>
           <button
             type="button"
             onClick={() => setImpersonatedCustomer(null)}
-            className="bg-slate-950 text-white hover:bg-slate-800 text-[11px] font-bold px-2.5 py-1 rounded transition-colors"
+            className="bg-slate-950 text-white hover:bg-slate-800 text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors"
           >
             Exit Customer View
           </button>
@@ -67,28 +66,28 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Brand & Logo */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-sm">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white font-black text-lg shadow-md shadow-indigo-500/20">
             ⚡
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-900 text-base tracking-tight">Mini ATS</span>
-              <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-indigo-200">
-                v1.0 Live
+              <span className="font-extrabold text-slate-900 dark:text-white text-base tracking-tight">Mini ATS</span>
+              <span className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-xs">
+                PRO
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-              <span className={`w-2 h-2 rounded-full ${isSupabaseConfigured ? 'bg-emerald-500' : 'bg-blue-500 animate-pulse'}`} />
-              <span>{isSupabaseConfigured ? 'Supabase Connected' : 'Local Demo Persistence'}</span>
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+              <span className={`w-2 h-2 rounded-full ${isSupabaseConfigured ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
+              <span>{isSupabaseConfigured ? 'Supabase Live' : 'Local Demo Engine'}</span>
             </div>
           </div>
         </div>
 
         {/* Center: Admin "Act on Behalf of" Customer Switcher */}
         {isAdmin && (
-          <div className="hidden md:flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
-            <span className="text-[11px] font-semibold text-slate-500 pl-1 flex items-center gap-1">
-              <Shield className="w-3.5 h-3.5 text-purple-600" />
+          <div className="hidden md:flex items-center gap-2 bg-slate-50 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+            <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 pl-1 flex items-center gap-1">
+              <Shield className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
               Customer Context:
             </span>
             <select
@@ -101,9 +100,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   setImpersonatedCustomer(target || null);
                 }
               }}
-              className="text-xs font-semibold py-1 px-2.5 rounded-lg border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+              className="text-xs font-bold py-1 px-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
             >
-              <option value="all">Admin Overview (All Customers)</option>
+              <option value="all">Admin Overview (All Accounts)</option>
               {customerProfiles.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.companyName || c.fullName} ({c.email})
@@ -115,12 +114,29 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right side actions */}
         <div className="flex items-center gap-2">
+          {/* Real Database Setup Wizard Trigger */}
+          <button
+            type="button"
+            onClick={onOpenDatabaseWizard}
+            className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-xs ${
+              isSupabaseConfigured
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:opacity-95'
+            }`}
+            title="Open Real Database Setup Wizard"
+          >
+            <Database className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">
+              {isSupabaseConfigured ? 'Database Live' : 'Connect Real DB'}
+            </span>
+          </button>
+
           {/* Admin Create Account Button */}
           {isAdmin && (
             <button
               type="button"
               onClick={onOpenCreateAccount}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-3 py-1.5 rounded-xl transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-bold bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 px-3 py-1.5 rounded-xl transition-colors"
               title="Create new Admin or Customer accounts"
             >
               <UserPlus className="w-3.5 h-3.5" />
@@ -128,59 +144,65 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
+          {/* Theme switcher toggle */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="p-2 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+            title={`Switch Theme (Current: ${theme})`}
+          >
+            {theme === 'light' ? (
+              <Moon className="w-4 h-4" />
+            ) : theme === 'dark' ? (
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+            ) : (
+              <Sun className="w-4 h-4 text-amber-400" />
+            )}
+          </button>
+
           {/* Assumptions & Design decisions */}
           <button
             type="button"
             onClick={onOpenAssumptions}
-            className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors"
-            title="Read Assumptions, Decisions & Demo Outline"
+            className="p-2 text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+            title="Read Assumptions & Architecture"
           >
             <HelpCircle className="w-4 h-4" />
           </button>
 
-          {/* Supabase status modal */}
-          <button
-            type="button"
-            onClick={onOpenSupabaseSettings}
-            className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-xl transition-colors"
-            title="Supabase Database Settings"
-          >
-            <Database className="w-4 h-4" />
-          </button>
-
-          {/* Quick Demo Role Switcher (Admin <-> Customer) */}
-          <div className="hidden lg:flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+          {/* Quick Demo Role Switcher */}
+          <div className="hidden lg:flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => switchUserRoleDemo('admin')}
-              className={`text-[11px] font-semibold px-2 py-1 rounded-lg transition-colors ${
+              className={`text-[11px] font-bold px-2 py-1 rounded-lg transition-colors ${
                 currentUser?.role === 'admin'
                   ? 'bg-purple-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
               }`}
             >
-              Admin Mode
+              Admin
             </button>
             <button
               type="button"
               onClick={() => switchUserRoleDemo('customer')}
-              className={`text-[11px] font-semibold px-2 py-1 rounded-lg transition-colors ${
+              className={`text-[11px] font-bold px-2 py-1 rounded-lg transition-colors ${
                 currentUser?.role === 'customer'
                   ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
               }`}
             >
-              Customer Mode
+              Customer
             </button>
           </div>
 
           {/* User profile capsule */}
-          <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+          <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-700">
             <div className="text-right hidden sm:block">
-              <div className="text-xs font-bold text-slate-900 leading-tight">
+              <div className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
                 {currentUser?.fullName}
               </div>
-              <div className="text-[10px] text-slate-500 flex items-center justify-end gap-1">
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-end gap-1">
                 <span
                   className={`inline-block w-1.5 h-1.5 rounded-full ${
                     currentUser?.role === 'admin' ? 'bg-purple-600' : 'bg-indigo-600'
@@ -194,7 +216,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={logout}
-              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors"
               title="Log out"
             >
               <LogOut className="w-4 h-4" />

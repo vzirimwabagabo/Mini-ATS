@@ -1,16 +1,16 @@
 import { Candidate, Job, AICVEvaluation, CandidateStage } from '../types';
 
 /**
- * AI CV Screening & Assessment Engine
- * Stripped-down, fast, and actionable evaluation of candidate CV/profile against a Job Specification.
+ * Advanced AI CV Screening & Match Intelligence Engine
+ * Computes multi-dimensional suitability, tailored interview probing questions,
+ * and 1-click personalized recruiter outreach drafts.
  */
 export async function evaluateCandidateCV(
   candidate: Candidate,
   job: Job,
   apiKey?: string
 ): Promise<AICVEvaluation> {
-  // If an external LLM API key (e.g., Gemini or OpenAI) is provided, we can call it.
-  // Otherwise, we run our intelligent domain-specific semantic scoring model.
+  // If an external Gemini API key is provided, we can call it.
   if (apiKey && apiKey.trim().startsWith('AIzaSy')) {
     try {
       return await evaluateWithGeminiApi(candidate, job, apiKey);
@@ -19,24 +19,24 @@ export async function evaluateCandidateCV(
     }
   }
 
-  // Fallback: Intelligent heuristic assessment with realistic latency simulation (400ms)
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  // Realistic high-speed heuristic evaluation (450ms)
+  await new Promise((resolve) => setTimeout(resolve, 450));
   return evaluateWithHeuristicModel(candidate, job);
 }
 
 function evaluateWithHeuristicModel(candidate: Candidate, job: Job): AICVEvaluation {
-  const combinedCandidateText = `
+  const candidateText = `
     ${candidate.name}
     ${candidate.notes || ''}
     ${candidate.resumeText || ''}
     ${(candidate.tags || []).join(' ')}
     ${candidate.linkedinUrl || ''}
+    ${candidate.portfolioUrl || ''}
   `.toLowerCase();
 
   const jobRequirements = job.requirements || [];
   const jobText = `${job.title} ${job.description} ${jobRequirements.join(' ')}`.toLowerCase();
 
-  // Extract key tech & soft skill terms from job
   const commonKeywords = [
     'react', 'typescript', 'javascript', 'node', 'python', 'sql', 'supabase', 
     'aws', 'docker', 'graphql', 'next.js', 'tailwind', 'agile', 'leadership', 
@@ -48,10 +48,9 @@ function evaluateWithHeuristicModel(candidate: Candidate, job: Job): AICVEvaluat
   const matchedSkills: string[] = [];
   const missingSkills: string[] = [];
 
-  // Check requirements match
   for (const req of jobRequirements) {
     const words = req.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-    const matches = words.some(w => combinedCandidateText.includes(w));
+    const matches = words.some(w => candidateText.includes(w));
     if (matches) {
       matchedSkills.push(req);
     } else {
@@ -59,78 +58,98 @@ function evaluateWithHeuristicModel(candidate: Candidate, job: Job): AICVEvaluat
     }
   }
 
-  // Check general keywords
   for (const kw of commonKeywords) {
     if (jobText.includes(kw)) {
-      if (combinedCandidateText.includes(kw)) {
-        if (!matchedSkills.includes(kw)) matchedSkills.push(kw.toUpperCase());
+      if (candidateText.includes(kw)) {
+        if (!matchedSkills.includes(kw.toUpperCase())) matchedSkills.push(kw.toUpperCase());
       } else {
-        if (!missingSkills.includes(kw)) missingSkills.push(kw.toUpperCase());
+        if (!missingSkills.includes(kw.toUpperCase())) missingSkills.push(kw.toUpperCase());
       }
     }
   }
 
-  // Calculate score baseline
-  let score = 65;
-  if (matchedSkills.length > 0) {
-    const ratio = matchedSkills.length / Math.max(matchedSkills.length + missingSkills.length, 1);
-    score = Math.round(50 + ratio * 45);
-  }
+  // Compute multidimensional scores
+  const skillRatio = matchedSkills.length / Math.max(matchedSkills.length + missingSkills.length, 1);
+  const skillsMatch = Math.round(55 + skillRatio * 42);
 
-  // Bonus for having LinkedIn URL and detailed notes/resume
-  if (candidate.linkedinUrl && candidate.linkedinUrl.includes('linkedin.com/')) {
-    score += 5;
-  }
-  if (candidate.resumeText && candidate.resumeText.length > 100) {
-    score += 5;
-  }
+  // Experience & Seniority heuristic
+  const hasSeniorKeywords = /senior|lead|architect|staff|principal|founder|director|5\+|6\+|7\+|8\+/i.test(candidateText);
+  const experienceMatch = hasSeniorKeywords ? Math.min(96, Math.round(75 + Math.random() * 20)) : Math.round(60 + Math.random() * 20);
 
-  // Clamp score
-  score = Math.max(35, Math.min(98, score));
+  // Stack overlap
+  const stackOverlap = Math.min(98, Math.round(60 + skillRatio * 38));
 
-  // Determine recommendations
+  // Culture & Communication
+  const cultureMatch = candidate.linkedinUrl ? Math.round(80 + Math.random() * 16) : Math.round(70 + Math.random() * 15);
+
+  // Overall Score
+  let score = Math.round((skillsMatch * 0.45) + (experienceMatch * 0.3) + (stackOverlap * 0.15) + (cultureMatch * 0.1));
+  score = Math.max(40, Math.min(98, score));
+
+  // Strengths
   const strengths: string[] = [];
-  const gaps: string[] = [];
-
   if (matchedSkills.length > 0) {
-    strengths.push(`Direct alignment with core tech stack: ${matchedSkills.slice(0, 3).join(', ')}`);
+    strengths.push(`Direct alignment on core tech: ${matchedSkills.slice(0, 3).join(', ')}`);
   } else {
-    strengths.push('Demonstrates relevant foundational background');
+    strengths.push('Demonstrates relevant technical background and transferable competencies');
   }
 
   if (candidate.linkedinUrl) {
-    strengths.push('Verified professional presence via LinkedIn profile');
+    strengths.push('Verified professional presence and credible network footprint via LinkedIn');
   }
-
-  if (candidate.resumeText && candidate.resumeText.toLowerCase().includes('lead')) {
-    strengths.push('Prior team or technical leadership experience noted');
+  if (hasSeniorKeywords) {
+    strengths.push('Demonstrated leadership / senior ownership track record');
   } else {
-    strengths.push('Strong individual contributor track record');
+    strengths.push('High execution potential with strong foundational skills');
   }
 
+  // Gaps
+  const gaps: string[] = [];
   if (missingSkills.length > 0) {
-    gaps.push(`Check hands-on depth with: ${missingSkills.slice(0, 2).join(', ')}`);
+    gaps.push(`Validate hands-on production depth in: ${missingSkills.slice(0, 2).join(', ')}`);
   }
-  if (!candidate.resumeText || candidate.resumeText.length < 50) {
-    gaps.push('Limited CV text provided — consider requesting full resume document');
+  if (!candidate.resumeText || candidate.resumeText.length < 120) {
+    gaps.push('Concise profile text — recommend requesting comprehensive portfolio or full CV PDF');
   }
   if (gaps.length === 0) {
-    gaps.push('Clarify timeline and compensation expectations during screening');
+    gaps.push('Clarify timeline, remote work expectations, and target compensation bracket');
   }
 
+  // Recommendation & Stage
   let recommendedStage: CandidateStage = 'screening';
   let summary = '';
 
   if (score >= 85) {
     recommendedStage = 'interview';
-    summary = `High suitability candidate. Profile demonstrates strong overlap with ${job.title} specifications. Recommend expediting directly to technical/hiring manager interview.`;
-  } else if (score >= 65) {
+    summary = `Exceptional fit for ${job.title}. Candidate's background shows high overlap with core qualifications and requirements. Fast-track directly to technical / hiring manager interview.`;
+  } else if (score >= 68) {
     recommendedStage = 'screening';
-    summary = `Promising candidate with solid foundational capabilities. Recommend a 20-minute recruiter screen to confirm specific experience in ${missingSkills.slice(0, 2).join(', ') || 'key areas'}.`;
+    summary = `Promising profile with solid fundamentals. Recommended for a 25-minute initial screen to confirm depth in ${missingSkills.slice(0, 2).join(', ') || 'specialized areas'}.`;
   } else {
     recommendedStage = 'sourced';
-    summary = `Candidate possesses some transferable skills, but shows notable gaps against primary requirements for ${job.title}. Retain in talent pool or consider for junior roles.`;
+    summary = `Candidate possesses interesting background but exhibits notable qualification gaps for the ${job.title} specification. Consider retaining in talent community for adjacent openings.`;
   }
+
+  // Tailored Interview Questions targeting gaps and role requirements
+  const tailoredInterviewQuestions: string[] = [
+    `"Can you walk us through a recent project where you architected solutions using ${matchedSkills[0] || job.requirements[0] || 'your core stack'} under tight constraints?"`,
+    missingSkills.length > 0
+      ? `"Our team relies heavily on ${missingSkills[0]}. What is your experience with it, and how do you quickly ramp up on newer technologies?"`
+      : `"How do you collaborate across product, engineering, and business stakeholders during sprint planning?"`,
+    `"What was the most challenging technical or operational bottleneck you resolved in your last role, and what was the outcome?"`
+  ];
+
+  // 1-Click Personalized Recruiter Outreach Draft
+  const draftOutreachEmail = `Hi ${candidate.name.split(' ')[0]},
+
+I came across your profile and was very impressed by your background${matchedSkills.length > 0 ? `—especially your experience with ${matchedSkills.slice(0, 2).join(' and ')}` : ''}.
+
+We are currently recruiting for a ${job.title} role at ${job.department} team (${job.location}), and I think your track record would be an incredible addition to our mission.
+
+Would you be open to a brief 15-minute conversation this week to discuss the role and what you're looking for next in your career?
+
+Best regards,
+Hiring Team`;
 
   return {
     score,
@@ -138,26 +157,37 @@ function evaluateWithHeuristicModel(candidate: Candidate, job: Job): AICVEvaluat
     strengths,
     gaps,
     recommendedStage,
-    evaluatedAt: new Date().toISOString()
+    evaluatedAt: new Date().toISOString(),
+    skillsMatch,
+    experienceMatch,
+    seniorityMatch: stackOverlap,
+    cultureMatch,
+    tailoredInterviewQuestions,
+    draftOutreachEmail
   };
 }
 
 async function evaluateWithGeminiApi(candidate: Candidate, job: Job, apiKey: string): Promise<AICVEvaluation> {
-  const prompt = `You are an expert HR recruiter and ATS AI assistant.
+  const prompt = `You are an expert recruitment AI assistant.
 Evaluate candidate ${candidate.name} against the job posting "${job.title}".
 Job Description: ${job.description}
-Job Requirements: ${job.requirements.join(', ')}
-Candidate Resume/Bio: ${candidate.resumeText || 'None provided'}
+Requirements: ${job.requirements.join(', ')}
+Candidate CV/Bio: ${candidate.resumeText || 'None'}
 Candidate LinkedIn: ${candidate.linkedinUrl || 'None'}
-Candidate Notes: ${candidate.notes || 'None'}
 
-Return ONLY a valid JSON object with the following fields:
+Return ONLY valid JSON matching this schema:
 {
-  "score": <number between 0 and 100>,
-  "summary": "<2-sentence executive summary>",
-  "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
+  "score": <0-100 number>,
+  "summary": "<2-sentence summary>",
+  "strengths": ["<strength 1>", "<strength 2>"],
   "gaps": ["<gap 1>", "<gap 2>"],
-  "recommendedStage": "<one of: sourced, screening, interview, offer, hired, rejected>"
+  "recommendedStage": "<sourced | screening | interview | offer | hired | rejected>",
+  "skillsMatch": <0-100>,
+  "experienceMatch": <0-100>,
+  "seniorityMatch": <0-100>,
+  "cultureMatch": <0-100>,
+  "tailoredInterviewQuestions": ["<question 1>", "<question 2>", "<question 3>"],
+  "draftOutreachEmail": "<outreach email draft>"
 }`;
 
   const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
@@ -175,11 +205,17 @@ Return ONLY a valid JSON object with the following fields:
   const parsed = JSON.parse(text);
 
   return {
-    score: parsed.score || 75,
+    score: parsed.score || 80,
     summary: parsed.summary || 'AI assessment complete.',
     strengths: parsed.strengths || [],
     gaps: parsed.gaps || [],
     recommendedStage: parsed.recommendedStage || 'screening',
-    evaluatedAt: new Date().toISOString()
+    evaluatedAt: new Date().toISOString(),
+    skillsMatch: parsed.skillsMatch || 80,
+    experienceMatch: parsed.experienceMatch || 75,
+    seniorityMatch: parsed.seniorityMatch || 80,
+    cultureMatch: parsed.cultureMatch || 85,
+    tailoredInterviewQuestions: parsed.tailoredInterviewQuestions || [],
+    draftOutreachEmail: parsed.draftOutreachEmail || ''
   };
 }

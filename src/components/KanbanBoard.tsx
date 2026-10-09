@@ -8,9 +8,6 @@ import {
   Rows3, 
   Plus, 
   Briefcase, 
-  Users, 
-  Sparkles,
-  RefreshCw,
   X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -28,12 +25,48 @@ interface KanbanBoardProps {
 }
 
 const COLUMNS: { id: CandidateStage; title: string; color: string; badge: string; bg: string }[] = [
-  { id: 'sourced', title: 'Sourced', color: 'border-slate-300', badge: 'bg-slate-100 text-slate-700', bg: 'bg-slate-50/60' },
-  { id: 'screening', title: 'Screening', color: 'border-blue-400', badge: 'bg-blue-100 text-blue-700', bg: 'bg-blue-50/30' },
-  { id: 'interview', title: 'Interview', color: 'border-indigo-400', badge: 'bg-indigo-100 text-indigo-700', bg: 'bg-indigo-50/30' },
-  { id: 'offer', title: 'Offer', color: 'border-amber-400', badge: 'bg-amber-100 text-amber-800', bg: 'bg-amber-50/30' },
-  { id: 'hired', title: 'Hired 🎉', color: 'border-emerald-400', badge: 'bg-emerald-100 text-emerald-800', bg: 'bg-emerald-50/40' },
-  { id: 'rejected', title: 'Archived', color: 'border-rose-300', badge: 'bg-rose-100 text-rose-700', bg: 'bg-rose-50/30' },
+  { 
+    id: 'sourced', 
+    title: 'Sourced', 
+    color: 'border-slate-400 dark:border-slate-600', 
+    badge: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300', 
+    bg: 'bg-slate-50/70 dark:bg-slate-900/40' 
+  },
+  { 
+    id: 'screening', 
+    title: 'Screening', 
+    color: 'border-blue-500 dark:border-blue-400', 
+    badge: 'bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300', 
+    bg: 'bg-blue-50/30 dark:bg-slate-900/40' 
+  },
+  { 
+    id: 'interview', 
+    title: 'Interview', 
+    color: 'border-indigo-500 dark:border-indigo-400', 
+    badge: 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300', 
+    bg: 'bg-indigo-50/30 dark:bg-slate-900/40' 
+  },
+  { 
+    id: 'offer', 
+    title: 'Offer', 
+    color: 'border-amber-500 dark:border-amber-400', 
+    badge: 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300', 
+    bg: 'bg-amber-50/30 dark:bg-slate-900/40' 
+  },
+  { 
+    id: 'hired', 
+    title: 'Hired 🎉', 
+    color: 'border-emerald-500 dark:border-emerald-400', 
+    badge: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300', 
+    bg: 'bg-emerald-50/30 dark:bg-slate-900/40' 
+  },
+  { 
+    id: 'rejected', 
+    title: 'Archived', 
+    color: 'border-rose-400 dark:border-rose-500', 
+    badge: 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300', 
+    bg: 'bg-rose-50/20 dark:bg-slate-900/40' 
+  },
 ];
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
@@ -45,7 +78,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onOpenManageJobs,
   onStageChange,
   onDeleteCandidate,
-  onResetDemoData,
 }) => {
   const [selectedJobId, setSelectedJobId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -91,16 +123,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     const candidateId = e.dataTransfer.getData('text/plain');
     if (candidateId) {
       if (targetStage === 'hired') {
-        confetti({ particleCount: 75, spread: 60, origin: { y: 0.65 } });
+        confetti({ particleCount: 80, spread: 70, origin: { y: 0.65 } });
       }
       onStageChange(candidateId, targetStage);
     }
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-slate-100/70 p-4 sm:p-6 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 bg-slate-100/90 dark:bg-slate-950 p-4 sm:p-6 overflow-hidden transition-colors">
       {/* Filters and Controls Bar */}
-      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-xs mb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs mb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 transition-colors">
         {/* Left Side: Job filter & Search */}
         <div className="flex flex-wrap items-center gap-2.5 flex-1">
           {/* Job Filter Dropdown */}
@@ -111,7 +143,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             <select
               value={selectedJobId}
               onChange={(e) => setSelectedJobId(e.target.value)}
-              className="w-full text-xs font-semibold pl-9 pr-8 py-2 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-800"
+              className="w-full text-xs font-bold pl-9 pr-8 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/60 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
             >
               <option value="all">All Jobs ({candidates.length} candidates)</option>
               {jobs.map((j) => {
@@ -132,10 +164,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </div>
             <input
               type="text"
-              placeholder="Filter by candidate name, email, or skill..."
+              placeholder="Filter by candidate name, email, or skill tag..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs pl-9 pr-8 py-2 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-800"
+              className="w-full text-xs font-medium pl-9 pr-8 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
             />
             {searchQuery && (
               <button
@@ -152,14 +184,14 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         {/* Right Side: Compact View Toggle & Quick Actions */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Compact View Toggle */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => setCompactMode(true)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
                 compactMode
-                  ? 'bg-white text-indigo-700 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
               title="Compact Kanban layout"
             >
@@ -169,10 +201,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             <button
               type="button"
               onClick={() => setCompactMode(false)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
                 !compactMode
-                  ? 'bg-white text-indigo-700 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
               title="Comfortable Cards with Details"
             >
@@ -185,7 +217,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           <button
             type="button"
             onClick={onOpenManageJobs}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-colors shadow-xs"
           >
             <Briefcase className="w-3.5 h-3.5 text-slate-500" />
             Jobs ({jobs.length})
@@ -195,7 +227,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           <button
             type="button"
             onClick={onOpenNewJob}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition-colors shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 rounded-xl transition-colors shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
             Post Job
@@ -205,7 +237,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           <button
             type="button"
             onClick={() => onOpenNewCandidate()}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             Add Candidate
@@ -215,20 +247,20 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
       {/* Active Filter Notice */}
       {(selectedJobId !== 'all' || searchQuery.trim() !== '') && (
-        <div className="flex items-center justify-between text-xs text-slate-500 mb-2 px-1">
+        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-2 px-1">
           <div className="flex items-center gap-1.5">
-            <Filter className="w-3.5 h-3.5 text-indigo-600" />
+            <Filter className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             <span>
               Showing <strong>{filteredCandidates.length}</strong> of{' '}
               <strong>{candidates.length}</strong> candidates
             </span>
             {selectedJobId !== 'all' && (
-              <span className="bg-indigo-50 text-indigo-700 font-medium px-2 py-0.5 rounded-md border border-indigo-200">
+              <span className="bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-bold px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800">
                 Job: {jobs.find((j) => j.id === selectedJobId)?.title}
               </span>
             )}
             {searchQuery && (
-              <span className="bg-slate-100 text-slate-700 font-medium px-2 py-0.5 rounded-md border border-slate-200">
+              <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
                 "{searchQuery}"
               </span>
             )}
@@ -240,7 +272,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               setSelectedJobId('all');
               setSearchQuery('');
             }}
-            className="text-indigo-600 hover:text-indigo-800 font-medium text-xs underline"
+            className="text-indigo-600 dark:text-indigo-400 hover:underline font-bold text-xs"
           >
             Reset Filters
           </button>
@@ -260,24 +292,24 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 onDragOver={(e) => handleDragOver(e, col.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, col.id)}
-                className={`flex flex-col rounded-2xl border transition-all h-full max-h-[calc(100vh-210px)] overflow-hidden ${
+                className={`flex flex-col rounded-2xl border transition-all h-full max-h-[calc(100vh-230px)] overflow-hidden ${
                   col.bg
                 } ${
                   isOver
-                    ? 'border-indigo-500 ring-2 ring-indigo-400/40 bg-indigo-50/50'
-                    : 'border-slate-200/90'
+                    ? 'border-indigo-500 ring-2 ring-indigo-400/40 bg-indigo-50/50 dark:bg-indigo-950/40'
+                    : 'border-slate-200 dark:border-slate-800'
                 }`}
               >
                 {/* Column Header */}
                 <div
-                  className={`p-3 border-b bg-white/80 backdrop-blur-xs flex items-center justify-between border-t-4 ${col.color}`}
+                  className={`p-3 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xs flex items-center justify-between border-t-4 ${col.color}`}
                 >
                   <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-xs text-slate-900 tracking-tight">
+                    <h3 className="font-extrabold text-xs text-slate-900 dark:text-white tracking-tight">
                       {col.title}
                     </h3>
                     <span
-                      className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${col.badge}`}
+                      className={`text-[11px] font-black px-1.5 py-0.5 rounded-full ${col.badge}`}
                     >
                       {columnCandidates.length}
                     </span>
@@ -286,7 +318,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   <button
                     type="button"
                     onClick={() => onOpenNewCandidate(col.id)}
-                    className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-colors"
+                    className="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
                     title={`Add candidate directly to ${col.title}`}
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -296,7 +328,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 {/* Cards List with Scroll */}
                 <div className="flex-1 p-2.5 overflow-y-auto space-y-2.5">
                   {columnCandidates.length === 0 ? (
-                    <div className="h-28 border border-dashed border-slate-200 rounded-xl flex items-center justify-center text-center p-3 text-[11px] text-slate-400">
+                    <div className="h-28 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-center text-center p-3 text-[11px] text-slate-400 dark:text-slate-500">
                       <span>Drag candidates here</span>
                     </div>
                   ) : (

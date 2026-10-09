@@ -30,13 +30,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const applyThemeClass = (t: AppTheme) => {
     const root = document.documentElement;
+    const body = document.body;
     root.classList.remove('theme-light', 'theme-dark', 'theme-midnight', 'dark');
+    if (body) {
+      body.classList.remove('theme-light', 'theme-dark', 'theme-midnight', 'dark');
+    }
+
     if (t === 'dark') {
       root.classList.add('dark', 'theme-dark');
+      if (body) body.classList.add('dark', 'theme-dark');
     } else if (t === 'midnight') {
       root.classList.add('dark', 'theme-midnight');
+      if (body) body.classList.add('dark', 'theme-midnight');
     } else {
       root.classList.add('theme-light');
+      if (body) body.classList.add('theme-light');
     }
   };
 

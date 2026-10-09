@@ -1,51 +1,54 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   * {
     box-sizing: border-box;
+  }
+  html {
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
   body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 }
 
-/* Light Theme Variables */
-:root, .theme-light {
-  --bg-primary: #f8fafc;
-  --bg-surface: #ffffff;
-  --bg-card: #ffffff;
-  --bg-subtle: #f1f5f9;
-  --border-subtle: #e2e8f0;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --accent-main: #6366f1;
+/* Base Theme Overrides to guarantee immediate visual theme transition */
+html.theme-light, body.theme-light {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
 }
 
-/* Dark Obsidian Theme */
-.dark.theme-dark {
-  --bg-primary: #090d16;
-  --bg-surface: #0f172a;
-  --bg-card: #131d36;
-  --bg-subtle: #1e293b;
-  --border-subtle: #1e293b;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --accent-main: #818cf8;
+html.dark, body.dark {
+  background-color: #090d16 !important;
+  color: #f8fafc !important;
 }
 
-/* Midnight Emerald Theme */
-.dark.theme-midnight {
-  --bg-primary: #031114;
-  --bg-surface: #061c20;
-  --bg-card: #0a272c;
-  --bg-subtle: #0f353c;
-  --border-subtle: #134e5a;
-  --text-main: #f0fdf4;
-  --text-muted: #6ee7b7;
-  --accent-main: #10b981;
+html.theme-midnight, body.theme-midnight {
+  background-color: #031114 !important;
+  color: #f0fdf4 !important;
+}
+
+.theme-midnight header, 
+.theme-midnight div[class*="bg-white"],
+.theme-midnight div[class*="bg-slate-900"] {
+  background-color: #061c20 !important;
+  border-color: #0f353c !important;
+}
+
+.theme-midnight div[class*="bg-slate-50"] {
+  background-color: #082328 !important;
+  border-color: #11414a !important;
+}
+
+.theme-dark header,
+.theme-dark div[class*="bg-white"] {
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
 }
 
 /* Scrollbars */

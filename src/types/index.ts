@@ -34,19 +34,36 @@ export interface Job {
 }
 
 export interface AICVEvaluation {
-  score: number; // Overall 0 - 100
+  score: number; // Calibrated 0-100: 85+ = exceptional, 65 = good, 50 = borderline, <40 = weak
   summary: string;
   strengths: string[];
   gaps: string[];
   recommendedStage: CandidateStage;
   evaluatedAt: string;
-  // Multi-dimensional AI breakdown
-  skillsMatch?: number; // 0 - 100
-  experienceMatch?: number; // 0 - 100
-  seniorityMatch?: number; // 0 - 100
-  cultureMatch?: number; // 0 - 100
+  // Verdict tier
+  tier?: 'strong_yes' | 'yes' | 'maybe' | 'no' | 'strong_no';
+  // Core dimensional scores (0-100)
+  skillsMatch?: number;
+  experienceMatch?: number;
+  seniorityMatch?: number;
+  cultureMatch?: number;
+  // Extended dimensional scores
+  technicalDepthScore?: number;
+  experienceRelevanceScore?: number;
+  seniorityAlignmentScore?: number;
+  achievementQualityScore?: number;
+  communicationClarityScore?: number;
+  // Flags
+  redFlags?: string[];
+  greenFlags?: string[];
+  criticalGaps?: string[];
+  // Interview content
+  probeQuestions?: string[];
   tailoredInterviewQuestions?: string[];
   draftOutreachEmail?: string;
+  // Meta
+  scoringRationale?: string;
+  usedLLM?: boolean;
 }
 
 export interface Candidate {
@@ -63,6 +80,8 @@ export interface Candidate {
   notes?: string;
   tags?: string[];
   aiEvaluation?: AICVEvaluation;
+  /** Structured data extracted by the LLM CV parser (work history, education, skills etc.) */
+  parsedCV?: import('../lib/cvStructure').ParsedCV;
   createdAt: string;
   updatedAt: string;
 }

@@ -87,7 +87,7 @@ const CVUploadZone: React.FC<CVUploadZoneProps> = ({ onParsed, geminiApiKey }) =
 
       setStatus('parsing');
       setStatusMsg(
-        geminiApiKey?.startsWith('AIzaSy')
+        geminiApiKey && geminiApiKey.length > 15
           ? 'Sending to Gemini AI for structured parsing…'
           : 'Parsing with local heuristic engine…'
       );
@@ -168,7 +168,7 @@ const CVUploadZone: React.FC<CVUploadZoneProps> = ({ onParsed, geminiApiKey }) =
             <div className="flex items-center gap-1.5 mt-1 bg-indigo-600/10 dark:bg-indigo-500/20 px-3 py-1 rounded-full">
               <Brain className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
               <span className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
-                {geminiApiKey?.startsWith('AIzaSy') ? 'Gemini AI will parse' : 'Smart local parser'} → auto-fills all fields
+                {geminiApiKey && geminiApiKey.length > 15 ? 'Gemini AI will parse' : 'Smart local parser'} → auto-fills all fields
               </span>
             </div>
           </div>
@@ -375,8 +375,8 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
   const [parsedCV, setParsedCV] = useState<ParsedCV | null>(null);
   const [showUploadZone, setShowUploadZone] = useState(!candidateToEdit);
 
-  // Read Gemini API key from localStorage (same key used for AI assessment)
-  const geminiApiKey = localStorage.getItem('ats_gemini_key') || undefined;
+  // Read Gemini API key from localStorage or .env
+  const geminiApiKey = localStorage.getItem('ats_gemini_key') || (import.meta.env.VITE_GEMINI_API_KEY as string) || undefined;
 
   /** Called when CV upload + parse completes — auto-fills form fields */
   const handleCVParsed = useCallback((parsed: ParsedCV, rawText: string) => {

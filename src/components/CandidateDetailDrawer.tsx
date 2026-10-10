@@ -121,7 +121,7 @@ export const CandidateDetailDrawer: React.FC<CandidateDetailDrawerProps> = ({
   const ai = candidate.aiEvaluation;
   const tier = ai?.tier;
   const tierConfig = tier ? TIER_CONFIG[tier] : null;
-  const geminiApiKey = localStorage.getItem('ats_gemini_key') || undefined;
+  const geminiApiKey = localStorage.getItem('ats_gemini_key') || (import.meta.env.VITE_GEMINI_API_KEY as string) || undefined;
 
   const handleStageSelect = (stage: CandidateStage) => {
     if (stage === 'hired') {

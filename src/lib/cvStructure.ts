@@ -97,7 +97,7 @@ Do NOT wrap the JSON in markdown code fences.
 
 async function extractWithGemini(cvText: string, apiKey: string): Promise<ParsedCV> {
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -255,9 +255,11 @@ export async function parseStructuredCV(
   geminiApiKey?: string
 ): Promise<CVParseResult> {
   // Try Gemini first if an API key is configured
-  if (geminiApiKey?.trim().startsWith('AIzaSy')) {
+  const key = geminiApiKey || localStorage.getItem('ats_gemini_key') || (import.meta.env.VITE_GEMINI_API_KEY as string) || '';
+
+  if (key && key.trim().length > 15) {
     try {
-      const parsed = await extractWithGemini(cvText, geminiApiKey.trim());
+      const parsed = await extractWithGemini(cvText, key.trim());
       return { parsed, usedLLM: true };
     } catch (err: any) {
       console.warn('[cvStructure] Gemini extraction failed, falling back to heuristics:', err.message);

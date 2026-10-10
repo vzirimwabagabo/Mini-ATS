@@ -135,7 +135,7 @@ async function evaluateWithGemini(
   const prompt = buildGeminiPrompt(candidate, job);
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -494,9 +494,9 @@ export async function evaluateCandidateCV(
   job: Job,
   apiKey?: string
 ): Promise<DetailedEvaluation> {
-  const key = apiKey || localStorage.getItem('ats_gemini_key') || '';
+  const key = apiKey || localStorage.getItem('ats_gemini_key') || (import.meta.env.VITE_GEMINI_API_KEY as string) || '';
 
-  if (key.trim().startsWith('AIzaSy')) {
+  if (key && key.trim().length > 15) {
     try {
       return await evaluateWithGemini(candidate, job, key.trim());
     } catch (err) {

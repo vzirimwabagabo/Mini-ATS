@@ -280,15 +280,24 @@ export const getStoredCandidates = (): Candidate[] => {
 // Unified Data API (Supabase or Local Persistence)
 // -------------------------------------------------------------
 
+let tablesMissingInSupabase = false;
+
+export const areTablesMissingInSupabase = () => tablesMissingInSupabase;
+
 export async function fetchAllProfiles(): Promise<UserProfile[]> {
   const supabase = getSupabaseClient();
-  if (supabase) {
+  if (supabase && !tablesMissingInSupabase) {
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: true });
-      if (!error && data && data.length > 0) {
+      if (error) {
+        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
+          tablesMissingInSupabase = true;
+          console.info('Supabase project connected, but schema tables are not yet created. Using local demo data.');
+        }
+      } else if (data && data.length > 0) {
         return data.map((d: any) => ({
           id: d.id,
           email: d.email,
@@ -307,14 +316,18 @@ export async function fetchAllProfiles(): Promise<UserProfile[]> {
 
 export async function fetchJobs(customerId?: string): Promise<Job[]> {
   const supabase = getSupabaseClient();
-  if (supabase) {
+  if (supabase && !tablesMissingInSupabase) {
     try {
       let query = supabase.from('jobs').select('*').order('created_at', { ascending: false });
       if (customerId && customerId !== 'all') {
         query = query.eq('customer_id', customerId);
       }
       const { data, error } = await query;
-      if (!error && data) {
+      if (error) {
+        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
+          tablesMissingInSupabase = true;
+        }
+      } else if (data) {
         return data.map((d: any) => ({
           id: d.id,
           customerId: d.customer_id,
@@ -343,7 +356,7 @@ export async function fetchJobs(customerId?: string): Promise<Job[]> {
 
 export async function fetchCandidates(customerId?: string, jobId?: string): Promise<Candidate[]> {
   const supabase = getSupabaseClient();
-  if (supabase) {
+  if (supabase && !tablesMissingInSupabase) {
     try {
       let query = supabase.from('candidates').select('*').order('created_at', { ascending: false });
       if (customerId && customerId !== 'all') {
@@ -353,7 +366,11 @@ export async function fetchCandidates(customerId?: string, jobId?: string): Prom
         query = query.eq('job_id', jobId);
       }
       const { data, error } = await query;
-      if (!error && data) {
+      if (error) {
+        if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
+          tablesMissingInSupabase = true;
+        }
+      } else if (data) {
         return data.map((d: any) => ({
           id: d.id,
           customerId: d.customer_id,

@@ -23,7 +23,6 @@ interface KanbanBoardProps {
   onOpenManageJobs: () => void;
   onStageChange: (candidateId: string, stage: CandidateStage) => void;
   onDeleteCandidate: (candidateId: string) => void;
-  onResetDemoData: () => void;
 }
 
 const COLUMNS: { id: CandidateStage; title: string; color: string; badge: string; bg: string }[] = [

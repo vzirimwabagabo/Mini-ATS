@@ -8,11 +8,13 @@ const schema = await readFile(new URL('../supabase/schema.sql', import.meta.url)
 const lifecycleMigration = await readFile(new URL('../supabase/migrations/20261012000100_customer_account_lifecycle.sql', import.meta.url), 'utf8');
 const adminFunction = await readFile(new URL('../supabase/functions/admin-create-account/index.ts', import.meta.url), 'utf8');
 const adminModal = await readFile(new URL('../src/components/AdminAccountModal.tsx', import.meta.url), 'utf8');
+const footerSource = await readFile(new URL('../src/components/Footer.tsx', import.meta.url), 'utf8');
 const loginView = await readFile(new URL('../src/components/LoginView.tsx', import.meta.url), 'utf8');
 const appSource = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
 const jobListSource = await readFile(new URL('../src/components/JobListModal.tsx', import.meta.url), 'utf8');
 const jobModalSource = await readFile(new URL('../src/components/JobModal.tsx', import.meta.url), 'utf8');
 const candidateDetailSource = await readFile(new URL('../src/components/CandidateDetailDrawer.tsx', import.meta.url), 'utf8');
+const candidateModalSource = await readFile(new URL('../src/components/CandidateModal.tsx', import.meta.url), 'utf8');
 const storageSource = await readFile(new URL('../src/lib/storage.ts', import.meta.url), 'utf8');
 const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 const parserSource = await readFile(new URL('../src/lib/cvParser.ts', import.meta.url), 'utf8');
@@ -158,6 +160,12 @@ test('jobs and candidates expose create, read, update, and delete paths', () => 
   assert.match(storageSource, /export async function saveCandidate/);
 });
 
+test('candidate job selector identifies the customer and selected job location', () => {
+  assert.match(candidateModalSource, /Choose Job Opening/);
+  assert.match(candidateModalSource, /\{j\.title\} — \{profiles\.find/);
+  assert.match(candidateModalSource, /selectedCustomer\?\.companyName[\s\S]*selectedJob\.location/);
+});
+
 test('Supabase write failures do not silently fall back to local demo persistence', () => {
   assert.match(storageSource, /Could not save the job to Supabase/);
   assert.match(storageSource, /Could not save the candidate to Supabase/);
@@ -201,4 +209,13 @@ test('light theme is white/blue, dark theme is monochrome, and Midnight remains 
   assert.match(loginView, /aria-label="Use light theme"/);
   assert.match(loginView, /aria-label="Use dark theme"/);
   assert.match(loginView, /aria-label="Use colorful midnight theme"/);
+});
+
+test('Reset Demo Data is only shown when Supabase is not configured', () => {
+  const resetGuard = footerSource.indexOf('!isSupabaseConfigured && (');
+  const resetEnd = footerSource.indexOf('</>', resetGuard);
+  assert.ok(resetGuard >= 0 && resetEnd > resetGuard);
+  const resetBlock = footerSource.slice(resetGuard, resetEnd);
+  assert.match(resetBlock, /Reset Demo Data/);
+  assert.match(resetBlock, /onResetData\(\);/);
 });

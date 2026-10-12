@@ -209,21 +209,24 @@ export const Footer: React.FC<FooterProps> = ({
               </div>
 
               <div className="flex items-center gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (confirm('Reset demo jobs and candidate records to fresh initial state?')) {
-                      onResetData();
-                    }
-                  }}
-                  className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
-                  title="Reset to fresh demo dataset"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  <span>Reset Demo Data</span>
-                </button>
-
-                <span className="text-slate-300 dark:text-slate-700">&bull;</span>
+                {!isSupabaseConfigured && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm('Reset demo jobs and candidate records to fresh initial state?')) {
+                          onResetData();
+                        }
+                      }}
+                      className="inline-flex items-center gap-1 text-[11px] text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+                      title="Reset to fresh demo dataset"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Reset Demo Data</span>
+                    </button>
+                    <span className="text-slate-300 dark:text-slate-700">&bull;</span>
+                  </>
+                )}
 
                 <a
                   href="https://github.com/vzirimwabagabo/Mini-ATS"

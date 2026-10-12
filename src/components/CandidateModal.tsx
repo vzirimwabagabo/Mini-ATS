@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Candidate, CandidateStage, Job } from '../types';
+import { Candidate, CandidateStage, Job, UserProfile } from '../types';
 import { evaluateCandidateCV } from '../lib/aiAssessment';
 import { extractTextFromFile, FileExtractionResult } from '../lib/cvParser';
 import { parseStructuredCV, ParsedCV, parsedCVToResumeText } from '../lib/cvStructure';
@@ -14,6 +14,7 @@ interface CandidateModalProps {
   isOpen: boolean;
   onClose: () => void;
   jobs: Job[];
+  profiles: UserProfile[];
   currentCustomerId: string;
   onCandidateSaved: (candidate: Candidate) => Promise<void> | void;
   candidateToEdit?: Candidate | null;
@@ -344,6 +345,7 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
   isOpen,
   onClose,
   jobs,
+  profiles,
   currentCustomerId,
   onCandidateSaved,
   candidateToEdit,
@@ -370,6 +372,8 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
   // CV Parsing state
   const [parsedCV, setParsedCV] = useState<ParsedCV | null>(null);
   const [showUploadZone, setShowUploadZone] = useState(!candidateToEdit);
+  const selectedJob = availableJobs.find((job) => job.id === jobId);
+  const selectedCustomer = profiles.find((profile) => profile.id === selectedJob?.customerId);
 
   /** Called when CV upload + parse completes — auto-fills form fields */
   const handleCVParsed = useCallback((parsed: ParsedCV, rawText: string) => {
@@ -405,7 +409,7 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const selectedJob = jobs.find((j) => j.id === jobId);
+      const selectedJob = availableJobs.find((j) => j.id === jobId);
       const tags = tagsInput
         .split(',')
         .map((t) => t.trim())
@@ -510,7 +514,7 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Target Job Position *
+                Choose Job Opening *
               </label>
               <select
                 required
@@ -518,12 +522,18 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
                 onChange={(e) => setJobId(e.target.value)}
                 className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
               >
+                {availableJobs.length === 0 && <option value="">No job openings available</option>}
                 {availableJobs.map((j) => (
                   <option key={j.id} value={j.id}>
-                    {j.title} ({j.department})
+                    {j.title} — {profiles.find((profile) => profile.id === j.customerId)?.companyName || profiles.find((profile) => profile.id === j.customerId)?.fullName || 'Customer'} — {j.department}
                   </option>
                 ))}
               </select>
+              {selectedJob && (
+                <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                  {selectedCustomer?.companyName || selectedCustomer?.fullName || 'Customer'} · {selectedJob.location}
+                </p>
+              )}
             </div>
 
             <div>

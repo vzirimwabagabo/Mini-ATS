@@ -17,7 +17,6 @@ interface NavbarProps {
   onOpenCreateAccount: () => void;
   onOpenAssumptions: () => void;
   onOpenDatabaseWizard: () => void;
-  onResetData: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({

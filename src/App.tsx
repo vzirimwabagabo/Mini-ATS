@@ -160,7 +160,6 @@ const ATSApp: React.FC = () => {
         onOpenCreateAccount={() => setIsAdminAccountModalOpen(true)}
         onOpenAssumptions={() => setIsAssumptionsModalOpen(true)}
         onOpenDatabaseWizard={() => setIsDatabaseWizardOpen(true)}
-        onResetData={resetDemoData}
       />
 
       <AnalyticsHeader candidates={candidates} jobs={jobs} />
@@ -189,7 +188,6 @@ const ATSApp: React.FC = () => {
           onOpenManageJobs={() => setIsJobListModalOpen(true)}
           onStageChange={handleStageChange}
           onDeleteCandidate={handleDeleteCandidate}
-          onResetDemoData={resetDemoData}
         />
       )}
       <Footer
@@ -228,6 +226,7 @@ const ATSApp: React.FC = () => {
           setCandidateToEdit(null);
         }}
         jobs={jobs}
+        profiles={allProfiles}
         currentCustomerId={effectiveUser?.id || currentUser.id}
         onCandidateSaved={handleCandidateSaved}
         candidateToEdit={candidateToEdit}

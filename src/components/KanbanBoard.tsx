@@ -314,8 +314,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       )}
 
       {/* Kanban Board Columns Container — Content-Aware Auto-Shrinking */}
-      <div className="flex-1 overflow-x-auto min-h-0 pb-2">
-        <div className="flex items-stretch gap-3.5 min-w-[780px] h-full">
+      <div className="w-full overflow-x-auto pb-4">
+        <div className="flex items-start gap-3.5 min-w-[780px]">
           {COLUMNS.map((col) => {
             const columnCandidates = filteredCandidates.filter((c) => c.stage === col.id);
             const isOver = draggingOverStage === col.id;
@@ -333,7 +333,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, col.id)}
                   onClick={() => toggleColumnManualExpand(col.id)}
-                  className={`flex flex-col items-center justify-between py-3.5 px-2 rounded-2xl border transition-all duration-300 ease-in-out cursor-pointer group select-none ${
+                  className={`flex flex-col items-center justify-between py-3.5 px-2 rounded-2xl border transition-all duration-300 ease-in-out cursor-pointer group select-none self-start h-auto min-h-[160px] ${
                     col.bg
                   } border-slate-200 dark:border-slate-800 hover:border-indigo-400 hover:bg-indigo-50/30 dark:hover:bg-slate-900 w-14 sm:w-16 min-w-[56px] sm:min-w-[64px] shrink-0 border-t-4 ${col.color}`}
                   title={`${col.title} (Empty — click or drag candidate to expand)`}
@@ -376,7 +376,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 onDragOver={(e) => handleDragOver(e, col.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, col.id)}
-                className={`flex flex-col rounded-2xl border transition-all duration-300 ease-in-out h-full overflow-hidden flex-1 min-w-[240px] sm:min-w-[260px] ${
+                className={`flex flex-col rounded-2xl border transition-all duration-300 ease-in-out self-start h-auto min-h-[160px] overflow-hidden flex-1 min-w-[240px] sm:min-w-[260px] ${
                   col.bg
                 } ${
                   isOver

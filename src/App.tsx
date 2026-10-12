@@ -24,6 +24,7 @@ import { AdminAccountModal } from './components/AdminAccountModal';
 import { AssumptionsModal } from './components/AssumptionsModal';
 import { DatabaseSetupWizardModal } from './components/DatabaseSetupWizardModal';
 import { Footer } from './components/Footer';
+import { LegalModal, LegalDocType } from './components/LegalModal';
 
 const ATSApp: React.FC = () => {
   const { currentUser, effectiveUser, impersonatedCustomer, allProfiles } = useAuth();
@@ -43,6 +44,8 @@ const ATSApp: React.FC = () => {
   const [isAdminAccountModalOpen, setIsAdminAccountModalOpen] = useState<boolean>(false);
   const [isAssumptionsModalOpen, setIsAssumptionsModalOpen] = useState<boolean>(false);
   const [isDatabaseWizardOpen, setIsDatabaseWizardOpen] = useState<boolean>(false);
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(false);
+  const [legalDocType, setLegalDocType] = useState<LegalDocType>('privacy');
 
   // Load data whenever effectiveUser changes
   useEffect(() => {
@@ -127,7 +130,7 @@ const ATSApp: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="flex flex-col min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Navbar
         onOpenCreateAccount={() => setIsAdminAccountModalOpen(true)}
         onOpenAssumptions={() => setIsAssumptionsModalOpen(true)}
@@ -138,7 +141,7 @@ const ATSApp: React.FC = () => {
       <AnalyticsHeader candidates={candidates} jobs={jobs} />
 
       {loadingData ? (
-        <div className="flex-1 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400">
+        <div className="flex-1 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400 py-20">
           <div className="flex items-center gap-2">
             <span className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
             Loading Recruitment Pipelines...
@@ -166,6 +169,10 @@ const ATSApp: React.FC = () => {
         candidates={candidates}
         onOpenAssumptions={() => setIsAssumptionsModalOpen(true)}
         onOpenDatabaseWizard={() => setIsDatabaseWizardOpen(true)}
+        onOpenLegal={(doc) => {
+          setLegalDocType(doc);
+          setIsLegalModalOpen(true);
+        }}
         onResetData={resetDemoData}
       />
 
@@ -224,6 +231,13 @@ const ATSApp: React.FC = () => {
       <DatabaseSetupWizardModal
         isOpen={isDatabaseWizardOpen}
         onClose={() => setIsDatabaseWizardOpen(false)}
+      />
+
+      {/* Legal & Regulatory Compliance Center */}
+      <LegalModal
+        isOpen={isLegalModalOpen}
+        onClose={() => setIsLegalModalOpen(false)}
+        initialDoc={legalDocType}
       />
     </div>
   );

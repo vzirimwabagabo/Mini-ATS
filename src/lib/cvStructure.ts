@@ -251,27 +251,8 @@ export interface CVParseResult {
  * Tries Gemini API first (if key available), then falls back to local heuristics.
  */
 export async function parseStructuredCV(
-  cvText: string,
-  geminiApiKey?: string
+  cvText: string
 ): Promise<CVParseResult> {
-  // Try Gemini first if an API key is configured
-  const key = geminiApiKey || localStorage.getItem('ats_gemini_key') || (import.meta.env.VITE_GEMINI_API_KEY as string) || '';
-
-  if (key && key.trim().length > 15) {
-    try {
-      const parsed = await extractWithGemini(cvText, key.trim());
-      return { parsed, usedLLM: true };
-    } catch (err: any) {
-      console.warn('[cvStructure] Gemini extraction failed, falling back to heuristics:', err.message);
-      return {
-        parsed: extractWithHeuristics(cvText),
-        usedLLM: false,
-        error: `LLM unavailable — used local parser. (${err.message})`,
-      };
-    }
-  }
-
-  // No API key — use heuristics
   await new Promise((r) => setTimeout(r, 300)); // Small delay to feel responsive
   return { parsed: extractWithHeuristics(cvText), usedLLM: false };
 }

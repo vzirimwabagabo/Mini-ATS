@@ -6,22 +6,23 @@ Built with **React 19**, **TypeScript**, **Vite**, **Tailwind CSS**, and **Supab
 
 ---
 
-## 🎯 Quick Platform Access
+## 🎯 Local Demo Access
 
 | Role | Email | Password | Description |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin@miniats.com` | `password123` | Full administrative control, account creation & "Act on Behalf of Customer" delegation |
-| **Customer 1** | `sarah@techwave.io` | `password123` | TechWave AI portal: Engineering & AI Product jobs, candidates, Kanban |
-| **Customer 2** | `david@acmecorp.com` | `password123` | Acme Enterprise portal: Sales & DevOps jobs, candidates, Kanban |
+| **Admin** | `admin@miniats.com` | Demo only | Local simulated role with account management and delegation |
+| **Customer 1** | `sarah@techwave.io` | Demo only | Local simulated TechWave AI workspace |
+| **Customer 2** | `david@acmecorp.com` | Demo only | Local simulated Acme Enterprise workspace |
 
-> 💡 **Instant 1-Click Login:** The login screen includes 1-click test buttons for both Admin and Customer roles for frictionless review.
+> These are browser-local demo identities, not authenticated accounts. The local demo is enabled only by the Vite development server; never use it for production or real candidate data. Cloud mode requires Supabase Auth and the tenant-scoped policies in `supabase/schema.sql`.
 
 ---
 
 ## 🚀 Core Features & Implementation Mapping
 
 ### 1. Admin Capabilities
-- **Create Accounts:** Admins can create new Customer or Admin accounts directly from the platform (`+ Create Account` button in the navbar or Admin Modal).
+- **Create Accounts:** Admins can create Customer or Admin accounts through an authenticated Supabase Edge Function (`+ Create Account`). The function validates the caller's Supabase session and admin profile before using the server-side Auth Admin API.
+- **Edit Accounts:** Admins can update a user's name, company, and role from the account list. Name/company changes sync to Supabase Auth metadata and `public.profiles`; role remains authoritative only in `public.profiles`. Login email and password are not changed by this form; an admin cannot demote themself or the last admin.
 - **Act on Behalf of Customers (Delegation / Masquerade):** Admins have a **Customer Context** dropdown in the top bar. Selecting a customer activates an amber delegation banner, displaying their exact pipeline and allowing the admin to post jobs, add candidates, and move stages on their behalf.
 - **Global Overview:** Admins can view all candidates and jobs across all accounts simultaneously.
 
@@ -55,6 +56,8 @@ Every candidate profile includes an **AI CV Screening & Evaluation Engine**:
 - **Identified Gaps / Interview Probes**: Specific areas for recruiters to drill into during interviews.
 - **Recommended Stage**: Automated recommendation (e.g. recommend advancing straight to Interview or Offer) with a 1-click **Apply Recommendation** button.
 
+CV extraction and assessments currently use browser-local heuristics. Direct Gemini calls are disabled because a client-side API key would be exposed in the browser; re-enable a hosted LLM only through a trusted server-side integration with appropriate candidate-data disclosures.
+
 ### How We Would Approach This in a Production System:
 1. **Multi-Modal Document Parsing**: Use OCR / PDF extraction (e.g., pdf-parse, AWS Textract) to convert uploaded resumes, CVs, and LinkedIn PDFs into structured JSON profiles.
 2. **De-biasing & Blind Screening Layer**: Strip names, gender identifiers, age signals, and photos before feeding profile data to the model to enforce compliance with EEOC / fair hiring regulations.
@@ -69,9 +72,7 @@ Every candidate profile includes an **AI CV Screening & Evaluation Engine**:
 
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS v4, Lucide Icons, Canvas Confetti.
 - **Backend & Database:** Supabase (PostgreSQL), Auth, Row Level Security (RLS).
-- **Dual Engine Persistence:**
-  - Connects seamlessly to any live Supabase cloud project (`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`).
-  - Includes a pre-seeded **Local Demo Engine** fallback so the system runs immediately upon opening with realistic pre-populated data without configuration bottlenecks.
+- **Persistence:** Connects directly to Supabase using the public anon key and Supabase Auth. Local demo data is for development only and is not an authentication system.
 
 ---
 
@@ -95,7 +96,17 @@ http://localhost:5173
 ### Connecting to your Supabase Project
 1. Create a project at [Supabase.com](https://supabase.com).
 2. Go to the **SQL Editor** in your Supabase dashboard and run the script in `supabase/schema.sql`.
-3. Copy your project URL and public anon key into `.env` (see `.env.example`) or enter them directly in the in-app **Supabase Settings** modal (database icon in the navbar).
+3. Copy your project URL and public anon key into `.env` (see `.env.example`). The anon key is public; database authorization must be enforced by RLS. Never put a service-role key in the client app.
+4. Create the first admin as a trusted operator: create the user in Supabase Auth, then promote only that verified user's matching profile through the Supabase SQL Editor or Table Editor. For example, after replacing the email with the intended admin address:
+    ```sql
+    UPDATE public.profiles AS p
+    SET role = 'admin'
+    FROM auth.users AS u
+    WHERE p.id = u.id
+       AND lower(u.email) = lower('admin@your-company.example');
+    ```
+    Do not grant admin based on client-provided signup metadata.
+5. Link the Supabase CLI to the project and deploy `supabase functions deploy admin-create-account`. Set the `ALLOWED_ORIGINS` function secret to the exact app origins (for example, local development and the production HTTPS origin). Verify `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` are available in the Edge Function environment. The service-role key must never be placed in a `VITE_` variable or frontend configuration.
 
 ---
 

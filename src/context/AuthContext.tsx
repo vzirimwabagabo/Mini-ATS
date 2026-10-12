@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, UserRole } from '../types';
-import { createNewAccount, fetchAllProfiles, getStoredProfiles, initLocalStorageIfEmpty } from '../lib/storage';
+import { createAccountAsAdmin, createNewAccount, fetchAllProfiles, getStoredProfiles, initLocalStorageIfEmpty, updateAccountAsAdmin } from '../lib/storage';
 import { getSupabaseClient, getSupabaseConfig } from '../lib/supabase';
 
 interface AuthContextType {
@@ -14,6 +14,7 @@ interface AuthContextType {
   logout: () => void;
   setImpersonatedCustomer: (customer: UserProfile | null) => void;
   createAccount: (email: string, password: string, fullName: string, role: UserRole, companyName?: string) => Promise<UserProfile>;
+  updateAccount: (userId: string, fullName: string, role: UserRole, companyName?: string) => Promise<UserProfile>;
   refreshProfiles: () => Promise<void>;
   switchUserRoleDemo: (role: UserRole) => void;
 }
@@ -30,12 +31,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isSupabaseConfigured, setIsSupabaseConfigured] = useState<boolean>(false);
 
   useEffect(() => {
-    initLocalStorageIfEmpty();
     const { isConfigured } = getSupabaseConfig();
     setIsSupabaseConfigured(isConfigured);
 
     const initAuth = async () => {
       try {
+        if (!isConfigured && import.meta.env.DEV) {
+          initLocalStorageIfEmpty();
+          const storedUser = localStorage.getItem(AUTH_USER_KEY);
+          if (storedUser) {
+            try {
+              setCurrentUser(JSON.parse(storedUser));
+            } catch {
+              localStorage.removeItem(AUTH_USER_KEY);
+            }
+          }
+
+          const profiles = await fetchAllProfiles();
+          setAllProfiles(profiles);
+
+          if (!storedUser) {
+            const defaultAdmin = profiles.find(p => p.role === 'admin') || profiles[0];
+            if (defaultAdmin) {
+              setCurrentUser(defaultAdmin);
+              localStorage.setItem(AUTH_USER_KEY, JSON.stringify(defaultAdmin));
+            }
+          }
+          return;
+        }
+
+        if (!isConfigured) return;
+
         const supabase = getSupabaseClient();
         if (supabase) {
           const { data } = await supabase.auth.getSession();
@@ -55,34 +81,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 createdAt: profile.created_at
               };
               setCurrentUser(u);
+              const profiles = await fetchAllProfiles();
+              setAllProfiles(profiles);
+            } else {
+              await supabase.auth.signOut();
             }
           }
         }
-
-        // Check local persisted user
-        const storedUser = localStorage.getItem(AUTH_USER_KEY);
-        if (storedUser) {
-          try {
-            setCurrentUser(JSON.parse(storedUser));
-          } catch {
-            // ignore
-          }
-        }
-
-        // Fetch profiles
-        const profiles = await fetchAllProfiles();
-        setAllProfiles(profiles);
-
-        // If no user is logged in, default to the demo admin for instant delight!
-        if (!storedUser) {
-          const defaultAdmin = profiles.find(p => p.role === 'admin') || profiles[0];
-          if (defaultAdmin) {
-            setCurrentUser(defaultAdmin);
-            localStorage.setItem(AUTH_USER_KEY, JSON.stringify(defaultAdmin));
-          }
-        }
-      } catch (e) {
-        console.error('Auth initialization error', e);
+      } catch {
+        console.error('Auth initialization failed');
       } finally {
         setIsLoading(false);
       }
@@ -100,7 +107,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const supabase = getSupabaseClient();
-      if (supabase && password) {
+      if (getSupabaseConfig().isConfigured) {
+        if (!supabase || !password) return false;
         try {
           const { data, error } = await supabase.auth.signInWithPassword({
             email,
@@ -122,16 +130,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 createdAt: profile.created_at
               };
               setCurrentUser(u);
-              localStorage.setItem(AUTH_USER_KEY, JSON.stringify(u));
+              const profiles = await fetchAllProfiles();
+              setAllProfiles(profiles);
               setImpersonatedCustomer(null);
-              setIsLoading(false);
               return true;
             }
           }
-        } catch (e) {
-          console.warn('Supabase sign-in failed, checking stored profiles', e);
+          if (data?.user) await supabase.auth.signOut();
+          return false;
+        } catch {
+          return false;
         }
       }
+
+      if (!import.meta.env.DEV) return false;
 
       // Check stored profiles
       const profiles = getStoredProfiles();
@@ -147,7 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // If email doesn't exist, create a customer account on the fly for ease of use
       const newAcc = await createNewAccount(
         email,
-        password || 'password123',
+        password || '',
         email.split('@')[0],
         'customer',
         'New Client Co'
@@ -183,12 +195,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     role: UserRole,
     companyName?: string
   ): Promise<UserProfile> => {
-    const created = await createNewAccount(email, password, fullName, role, companyName);
+    let created: UserProfile;
+    if (getSupabaseConfig().isConfigured) {
+      if (!currentUser) {
+        if (role !== 'customer') {
+          throw new Error('Admin accounts can only be created by an authenticated admin.');
+        }
+        created = await createNewAccount(email, password, fullName, role, companyName);
+      } else if (currentUser.role === 'admin') {
+        created = await createAccountAsAdmin(email, password, fullName, role, companyName);
+      } else {
+        throw new Error('Only an authenticated admin can create accounts while signed in.');
+      }
+    } else {
+      if (!import.meta.env.DEV) {
+        throw new Error('Configure Supabase before creating accounts in a production build.');
+      }
+      created = await createNewAccount(email, password, fullName, role, companyName);
+    }
     await refreshProfiles();
     return created;
   };
 
+  const updateAccount = async (
+    userId: string,
+    fullName: string,
+    role: UserRole,
+    companyName?: string
+  ): Promise<UserProfile> => {
+    if (currentUser?.role !== 'admin') throw new Error('Only an admin can edit accounts.');
+
+    const updated = await updateAccountAsAdmin(userId, fullName, role, companyName);
+    await refreshProfiles();
+    setCurrentUser((user) => user?.id === updated.id ? updated : user);
+    setImpersonatedCustomer((customer) => customer?.id === updated.id ? updated : customer);
+    return updated;
+  };
+
   const switchUserRoleDemo = (role: UserRole) => {
+    if (!import.meta.env.DEV || getSupabaseConfig().isConfigured) return;
     const profiles = getStoredProfiles();
     const target = profiles.find(p => p.role === role);
     if (target) {
@@ -215,6 +260,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         setImpersonatedCustomer,
         createAccount,
+        updateAccount,
         refreshProfiles,
         switchUserRoleDemo
       }}

@@ -3,6 +3,7 @@ import { Candidate, CandidateStage, Job } from '../types';
 import { ExternalLink, Sparkles, ChevronRight, ChevronLeft, Trash2 } from 'lucide-react';
 import { LinkedinIcon } from './Icons';
 import confetti from 'canvas-confetti';
+import { safeExternalUrl } from '../lib/safeExternalUrl';
 
 interface CandidateCardProps {
   candidate: Candidate;
@@ -24,6 +25,8 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
   onDelete
 }) => {
   const currentStageIndex = STAGES.indexOf(candidate.stage);
+  const linkedinUrl = safeExternalUrl(candidate.linkedinUrl);
+  const portfolioUrl = safeExternalUrl(candidate.portfolioUrl);
 
   const handleNextStage = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -77,11 +80,11 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
 
         <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
           <span className="truncate max-w-[130px] font-medium">{job?.title || 'General Pool'}</span>
-          {candidate.linkedinUrl && (
+          {linkedinUrl && (
             <a
-              href={candidate.linkedinUrl}
+              href={linkedinUrl}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
               className="text-blue-500 hover:text-blue-600 dark:hover:text-blue-300"
               title="Open LinkedIn"
@@ -163,11 +166,11 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
 
       {/* Tags and Socials */}
       <div className="flex flex-wrap items-center gap-1.5">
-        {candidate.linkedinUrl && (
+        {linkedinUrl && (
           <a
-            href={candidate.linkedinUrl}
+            href={linkedinUrl}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-2 py-0.5 rounded-lg border border-blue-200 dark:border-blue-800 transition-colors"
           >
@@ -175,11 +178,11 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
             LinkedIn
           </a>
         )}
-        {candidate.portfolioUrl && (
+        {portfolioUrl && (
           <a
-            href={candidate.portfolioUrl}
+            href={portfolioUrl}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-600 transition-colors"
           >

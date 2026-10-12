@@ -491,19 +491,8 @@ function stageFromScore(score: number): CandidateStage {
  */
 export async function evaluateCandidateCV(
   candidate: Candidate,
-  job: Job,
-  apiKey?: string
+  job: Job
 ): Promise<DetailedEvaluation> {
-  const key = apiKey || localStorage.getItem('ats_gemini_key') || (import.meta.env.VITE_GEMINI_API_KEY as string) || '';
-
-  if (key && key.trim().length > 15) {
-    try {
-      return await evaluateWithGemini(candidate, job, key.trim());
-    } catch (err) {
-      console.warn('[aiAssessment] Gemini call failed, using heuristics:', err);
-    }
-  }
-
   // Simulate a realistic processing delay for the local engine
   await new Promise((r) => setTimeout(r, 600));
   return evaluateWithHeuristics(candidate, job);
@@ -516,14 +505,13 @@ export async function evaluateCandidateCV(
  */
 export async function rankCandidatesForJob(
   candidates: Candidate[],
-  job: Job,
-  apiKey?: string
+  job: Job
 ): Promise<Array<Candidate & { evaluation: DetailedEvaluation }>> {
   const results = await Promise.all(
     candidates.map(async (c) => {
       const evaluation = c.aiEvaluation
         ? (c.aiEvaluation as DetailedEvaluation)
-        : await evaluateCandidateCV(c, job, apiKey);
+        : await evaluateCandidateCV(c, job);
       return { ...c, evaluation };
     })
   );

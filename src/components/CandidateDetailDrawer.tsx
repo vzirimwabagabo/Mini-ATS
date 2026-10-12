@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { LinkedinIcon } from './Icons';
 import confetti from 'canvas-confetti';
+import { safeExternalUrl } from '../lib/safeExternalUrl';
 
 interface CandidateDetailDrawerProps {
   candidate: Candidate | null;
@@ -112,6 +113,8 @@ export const CandidateDetailDrawer: React.FC<CandidateDetailDrawerProps> = ({
   if (!candidate) return null;
 
   const currentJob = jobs.find((j) => j.id === candidate.jobId);
+  const linkedinUrl = safeExternalUrl(candidate.linkedinUrl);
+  const portfolioUrl = safeExternalUrl(candidate.portfolioUrl);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [notes, setNotes] = useState(candidate.notes || '');
   const [isSavedNotes, setIsSavedNotes] = useState(false);
@@ -121,8 +124,6 @@ export const CandidateDetailDrawer: React.FC<CandidateDetailDrawerProps> = ({
   const ai = candidate.aiEvaluation;
   const tier = ai?.tier;
   const tierConfig = tier ? TIER_CONFIG[tier] : null;
-  const geminiApiKey = localStorage.getItem('ats_gemini_key') || (import.meta.env.VITE_GEMINI_API_KEY as string) || undefined;
-
   const handleStageSelect = (stage: CandidateStage) => {
     if (stage === 'hired') {
       confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
@@ -134,7 +135,7 @@ export const CandidateDetailDrawer: React.FC<CandidateDetailDrawerProps> = ({
     if (!currentJob) return;
     setIsEvaluating(true);
     try {
-      const evaluation = await evaluateCandidateCV(candidate, currentJob, geminiApiKey);
+      const evaluation = await evaluateCandidateCV(candidate, currentJob);
       onUpdateCandidate({ ...candidate, aiEvaluation: evaluation });
     } catch (err) {
       console.error('AI evaluation failed', err);
@@ -287,18 +288,18 @@ export const CandidateDetailDrawer: React.FC<CandidateDetailDrawerProps> = ({
                 <span>{candidate.phone}</span>
               </div>
             )}
-            {candidate.linkedinUrl && (
+            {linkedinUrl && (
               <div className="flex items-center gap-2">
                 <LinkedinIcon className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                <a href={candidate.linkedinUrl} target="_blank" rel="noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline truncate">
+                <a href={linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline truncate">
                   LinkedIn Profile
                 </a>
               </div>
             )}
-            {candidate.portfolioUrl && (
+            {portfolioUrl && (
               <div className="flex items-center gap-2">
                 <ExternalLink className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <a href={candidate.portfolioUrl} target="_blank" rel="noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline truncate">
+                <a href={portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 hover:underline truncate">
                   Portfolio / GitHub
                 </a>
               </div>
@@ -314,10 +315,7 @@ export const CandidateDetailDrawer: React.FC<CandidateDetailDrawerProps> = ({
                   <h3 className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                     AI CV Assessment Engine
-                    {geminiApiKey
-                      ? <span className="text-[10px] font-normal text-purple-600 dark:text-purple-400 ml-1">Gemini-powered</span>
-                      : <span className="text-[10px] font-normal text-slate-400 ml-1">Local engine</span>
-                    }
+                    <span className="text-[10px] font-normal text-slate-400 ml-1">Local engine</span>
                   </h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     Calibrated fit scoring against <strong>{currentJob?.title}</strong>

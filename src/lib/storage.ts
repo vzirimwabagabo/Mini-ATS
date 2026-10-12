@@ -1,5 +1,6 @@
 import { Candidate, CandidateStage, Job, UserProfile, UserRole } from '../types';
 import { getSupabaseClient } from './supabase';
+import { getFunctionErrorMessage } from './functionError';
 
 const STORAGE_KEY_PROFILES = 'mini_ats_profiles_v1';
 const STORAGE_KEY_JOBS = 'mini_ats_jobs_v1';
@@ -670,6 +671,63 @@ export async function deleteJob(jobId: string): Promise<void> {
   localStorage.setItem(STORAGE_KEY_CANDIDATES, JSON.stringify(candidates));
 }
 
+export async function createAccountAsAdmin(
+  email: string,
+  password: string,
+  fullName: string,
+  role: UserRole,
+  companyName?: string
+): Promise<UserProfile> {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase is not configured.');
+
+  const { data, error } = await supabase.functions.invoke('admin-create-account', {
+    body: { email, password, fullName, role, companyName }
+  });
+
+  if (error) {
+    throw new Error(await getFunctionErrorMessage(error));
+  }
+  if (!data?.profile) {
+    throw new Error('The Edge Function returned no account profile. Check its logs for this request.');
+  }
+
+  return data.profile as UserProfile;
+}
+
+export async function updateAccountAsAdmin(
+  userId: string,
+  fullName: string,
+  role: UserRole,
+  companyName?: string
+): Promise<UserProfile> {
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.functions.invoke('admin-create-account', {
+      body: { action: 'update', userId, fullName, role, companyName }
+    });
+
+    if (error) throw new Error(await getFunctionErrorMessage(error));
+    if (!data?.profile) throw new Error('The Edge Function returned no updated profile.');
+    return data.profile as UserProfile;
+  }
+
+  if (!import.meta.env.DEV) throw new Error('Configure Supabase before editing accounts.');
+
+  const profiles = getStoredProfiles();
+  const index = profiles.findIndex((profile) => profile.id === userId);
+  if (index === -1) throw new Error('Account not found.');
+
+  profiles[index] = {
+    ...profiles[index],
+    fullName: fullName.trim(),
+    role,
+    companyName: companyName?.trim() || undefined,
+  };
+  localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(profiles));
+  return profiles[index];
+}
+
 export async function createNewAccount(
   email: string,
   _password: string,
@@ -681,33 +739,33 @@ export async function createNewAccount(
   const now = new Date().toISOString();
 
   if (supabase) {
-    try {
-      // Create user via Supabase auth signUp
-      const { data: authData, error: authErr } = await supabase.auth.signUp({
-        email,
-        password: _password,
-        options: {
-          data: {
-            full_name: fullName,
-            role,
-            company_name: companyName || ''
-          }
+    const { data: authData, error: authErr } = await supabase.auth.signUp({
+      email,
+      password: _password,
+      options: {
+        data: {
+          full_name: fullName,
+          company_name: companyName || ''
         }
-      });
-
-      if (!authErr && authData?.user) {
-        return {
-          id: authData.user.id,
-          email,
-          fullName,
-          role,
-          companyName,
-          createdAt: now
-        };
       }
-    } catch (e) {
-      console.warn('Supabase signUp failed, saving profile to local fallback', e);
+    });
+
+    if (authErr || !authData?.user) {
+      throw new Error('Cloud account creation failed. Verify the email and password requirements, then try again.');
     }
+
+    return {
+      id: authData.user.id,
+      email,
+      fullName,
+      role: 'customer',
+      companyName,
+      createdAt: now
+    };
+  }
+
+  if (!import.meta.env.DEV) {
+    throw new Error('Configure Supabase before creating accounts in a production build.');
   }
 
   // Local storage creation

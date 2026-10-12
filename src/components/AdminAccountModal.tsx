@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UserProfile, UserRole } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { X, UserPlus, Shield, Building, Users, CheckCircle, Mail, Key } from 'lucide-react';
+import { X, UserPlus, Shield, Building, Users, CheckCircle, Mail, Key, Pencil, Save } from 'lucide-react';
 
 interface AdminAccountModalProps {
   isOpen: boolean;
@@ -9,42 +9,65 @@ interface AdminAccountModalProps {
 }
 
 export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, onClose }) => {
-  const { allProfiles, createAccount } = useAuth();
+  const { allProfiles, createAccount, updateAccount, isSupabaseConfigured } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
+  const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
   const [role, setRole] = useState<UserRole>('customer');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('password123');
+  const [password, setPassword] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
   if (!isOpen) return null;
 
+  const resetForm = () => {
+    setEditingProfile(null);
+    setRole('customer');
+    setFullName('');
+    setEmail('');
+    setPassword('');
+    setCompanyName('');
+  };
+
+  const handleEdit = (profile: UserProfile) => {
+    setEditingProfile(profile);
+    setRole(profile.role);
+    setFullName(profile.fullName);
+    setEmail(profile.email);
+    setCompanyName(profile.companyName || '');
+    setPassword('');
+    setSuccessMessage('');
+    setActiveTab('create');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !email.trim()) return;
+    if (!fullName.trim() || (!editingProfile && (!email.trim() || !password))) return;
 
     setIsSubmitting(true);
     setSuccessMessage('');
     try {
-      await createAccount(
-        email.trim(),
-        password,
-        fullName.trim(),
-        role,
-        role === 'customer' ? companyName.trim() : undefined
-      );
-
-      setSuccessMessage(`Account created successfully for ${fullName} (${role})!`);
-      setFullName('');
-      setEmail('');
-      setCompanyName('');
-      setPassword('password123');
+      if (editingProfile) {
+        await updateAccount(editingProfile.id, fullName.trim(), role, companyName.trim());
+        setSuccessMessage(`Account updated successfully for ${fullName}.`);
+        setActiveTab('list');
+      } else {
+        await createAccount(
+          email.trim(),
+          password,
+          fullName.trim(),
+          role,
+          role === 'customer' ? companyName.trim() : undefined
+        );
+        setSuccessMessage(`Account created successfully for ${fullName} (${role})!`);
+        resetForm();
+      }
       setTimeout(() => setSuccessMessage(''), 3500);
     } catch (err: any) {
-      alert(`Error creating account: ${err.message || 'Unknown error'}`);
+      alert(`Error ${editingProfile ? 'updating' : 'creating'} account: ${err.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -62,7 +85,7 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
               <Shield className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Admin Account Management</h2>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">{editingProfile ? 'Edit Account' : 'Admin Account Management'}</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Create new Customer and Admin platform accounts
               </p>
@@ -81,7 +104,11 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
         <div className="flex border-b border-slate-100 dark:border-slate-800 text-xs font-semibold px-6 pt-2 bg-slate-50/50 dark:bg-slate-900/40 gap-4">
           <button
             type="button"
-            onClick={() => setActiveTab('create')}
+            onClick={() => {
+              resetForm();
+              setSuccessMessage('');
+              setActiveTab('create');
+            }}
             className={`pb-2.5 border-b-2 transition-colors flex items-center gap-1.5 ${
               activeTab === 'create'
                 ? 'border-purple-600 text-purple-700 dark:text-purple-400'
@@ -198,7 +225,16 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
               </div>
             </div>
 
-            {/* Email & Password */}
+            {editingProfile ? (
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Login email (not editable here)
+                </label>
+                <p className="text-xs p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  {editingProfile.email}
+                </p>
+              </div>
+            ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -224,8 +260,10 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
                 <div className="relative">
                   <Key className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
                   <input
-                    type="text"
+                    type="password"
                     required
+                    minLength={isSupabaseConfigured ? 12 : undefined}
+                    maxLength={128}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full text-xs pl-8 pr-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 font-mono transition-colors"
@@ -233,28 +271,39 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
                 </div>
               </div>
             </div>
+            )}
 
             {/* Actions */}
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={editingProfile ? () => {
+                  resetForm();
+                  setSuccessMessage('');
+                  setActiveTab('list');
+                } : onClose}
                 className="text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 px-4 py-2 rounded-lg transition-colors"
               >
-                Close
+                {editingProfile ? 'Cancel edit' : 'Close'}
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className="text-xs font-semibold bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
               >
-                <UserPlus className="w-3.5 h-3.5" />
-                {isSubmitting ? 'Creating...' : `Create ${role === 'admin' ? 'Admin' : 'Customer'} Account`}
+                {editingProfile ? <Save className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
+                {isSubmitting ? 'Saving...' : editingProfile ? 'Save Changes' : `Create ${role === 'admin' ? 'Admin' : 'Customer'} Account`}
               </button>
             </div>
           </form>
         ) : (
           <div className="p-6 max-h-[70vh] overflow-y-auto space-y-3">
+            {successMessage && (
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 rounded-xl text-xs flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{successMessage}</span>
+              </div>
+            )}
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
               Current registered platform users across the database:
             </p>
@@ -281,6 +330,15 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
                     {p.companyName && <span>• {p.companyName}</span>}
                   </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => handleEdit(p)}
+                  className="ml-3 p-2 text-slate-500 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg"
+                  title={`Edit ${p.fullName}`}
+                  aria-label={`Edit ${p.fullName}`}
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
               </div>
             ))}
           </div>

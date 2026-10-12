@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import schemaSql from '../../supabase/schema.sql?raw';
 import { getSupabaseConfig, updateSupabaseCredentials, getSupabaseClient } from '../lib/supabase';
 import { 
   X, 
@@ -39,78 +40,7 @@ export const DatabaseSetupWizardModal: React.FC<DatabaseSetupWizardModalProps> =
   if (!isOpen) return null;
 
   const handleCopySql = () => {
-    // Read schema SQL text
-    const sqlText = `-- Copy and run this in your Supabase SQL Editor:
-DO $$ BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-        CREATE TYPE user_role AS ENUM ('admin', 'customer');
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'candidate_stage') THEN
-        CREATE TYPE candidate_stage AS ENUM ('sourced', 'screening', 'interview', 'offer', 'hired', 'rejected');
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'job_type') THEN
-        CREATE TYPE job_type AS ENUM ('Full-time', 'Part-time', 'Contract', 'Remote');
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'job_status') THEN
-        CREATE TYPE job_status AS ENUM ('active', 'paused', 'closed');
-    END IF;
-END $$;
-
-CREATE TABLE IF NOT EXISTS public.profiles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email TEXT NOT NULL UNIQUE,
-    full_name TEXT NOT NULL,
-    role user_role NOT NULL DEFAULT 'customer',
-    company_name TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS public.jobs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    customer_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
-    department TEXT NOT NULL,
-    location TEXT NOT NULL,
-    type job_type NOT NULL DEFAULT 'Full-time',
-    description TEXT NOT NULL,
-    requirements TEXT[] DEFAULT '{}',
-    salary_range TEXT,
-    status job_status NOT NULL DEFAULT 'active',
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS public.candidates (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    customer_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
-    job_id UUID REFERENCES public.jobs(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    phone TEXT,
-    linkedin_url TEXT,
-    portfolio_url TEXT,
-    resume_text TEXT,
-    stage candidate_stage NOT NULL DEFAULT 'sourced',
-    notes TEXT,
-    tags TEXT[] DEFAULT '{}',
-    ai_evaluation JSONB,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.jobs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.candidates ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Profiles public policy" ON public.profiles;
-CREATE POLICY "Profiles public policy" ON public.profiles FOR ALL USING (true) WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Jobs public policy" ON public.jobs;
-CREATE POLICY "Jobs public policy" ON public.jobs FOR ALL USING (true) WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Candidates public policy" ON public.candidates;
-CREATE POLICY "Candidates public policy" ON public.candidates FOR ALL USING (true) WITH CHECK (true);
-`;
-    navigator.clipboard.writeText(sqlText);
+    navigator.clipboard.writeText(schemaSql);
     setCopiedSql(true);
     setTimeout(() => setCopiedSql(false), 2500);
   };
@@ -149,7 +79,7 @@ CREATE POLICY "Candidates public policy" ON public.candidates FOR ALL USING (tru
       setTestStatus({
         tested: true,
         success: true,
-        message: 'Connected to live Supabase database! RLS and tables are verified.',
+        message: 'Connected to Supabase and required tables are available. Run supabase/security_tests.sql against a test database to verify tenant RLS.',
         stats: {
           profiles: profiles?.length || 0,
           jobs: jobs?.length || 0,

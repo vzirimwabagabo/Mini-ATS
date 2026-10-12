@@ -34,6 +34,9 @@ async function extractPdfText(file: File): Promise<string> {
 
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  if (pdf.numPages > MAX_PDF_PAGES) {
+    throw new Error(`PDF exceeds the ${MAX_PDF_PAGES}-page limit.`);
+  }
 
   const pageTexts: string[] = [];
   for (let i = 1; i <= pdf.numPages; i++) {
@@ -70,6 +73,9 @@ export interface FileExtractionResult {
   error?: string;
 }
 
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_PDF_PAGES = 100;
+
 /** Main entry — extract text from any supported CV file */
 export async function extractTextFromFile(file: File): Promise<FileExtractionResult> {
   const fileType = detectFileType(file);
@@ -82,6 +88,16 @@ export async function extractTextFromFile(file: File): Promise<FileExtractionRes
       fileName: file.name,
       fileSizeKB,
       error: 'Unsupported file type. Please upload a PDF, DOCX, or TXT file.',
+    };
+  }
+
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return {
+      text: '',
+      fileType,
+      fileName: file.name,
+      fileSizeKB,
+      error: 'File exceeds the 10 MB upload limit.',
     };
   }
 

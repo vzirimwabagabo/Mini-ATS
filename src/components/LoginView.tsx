@@ -16,7 +16,7 @@ export const LoginView: React.FC = () => {
     setLoading(true);
     setErrorMsg('');
     try {
-      await login(demoEmail, 'password123');
+      await login(demoEmail);
     } catch (err: any) {
       setErrorMsg(err.message || 'Login failed');
     } finally {
@@ -67,8 +67,8 @@ export const LoginView: React.FC = () => {
 
       <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white/95 backdrop-blur-md py-8 px-6 sm:px-8 shadow-2xl rounded-2xl border border-white/20">
-          {/* Quick Demo Access Box */}
-          <div className="mb-6 p-4 rounded-xl bg-gradient-to-br from-slate-50 to-indigo-50/50 border border-indigo-100">
+          {/* Local role simulation is only available in development without Supabase. */}
+          {!isSupabaseConfigured && import.meta.env.DEV && <div className="mb-6 p-4 rounded-xl bg-gradient-to-br from-slate-50 to-indigo-50/50 border border-indigo-100">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
@@ -119,7 +119,7 @@ export const LoginView: React.FC = () => {
                 </div>
               </button>
             </div>
-          </div>
+          </div>}
 
           <div className="relative mb-5">
             <div className="absolute inset-0 flex items-center">

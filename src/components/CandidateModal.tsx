@@ -60,10 +60,9 @@ type ParseStatus = 'idle' | 'extracting' | 'parsing' | 'done' | 'error';
 
 interface CVUploadZoneProps {
   onParsed: (result: ParsedCV, rawText: string) => void;
-  geminiApiKey?: string;
 }
 
-const CVUploadZone: React.FC<CVUploadZoneProps> = ({ onParsed, geminiApiKey }) => {
+const CVUploadZone: React.FC<CVUploadZoneProps> = ({ onParsed }) => {
   const [status, setStatus] = useState<ParseStatus>('idle');
   const [statusMsg, setStatusMsg] = useState('');
   const [dragOver, setDragOver] = useState(false);
@@ -86,14 +85,10 @@ const CVUploadZone: React.FC<CVUploadZoneProps> = ({ onParsed, geminiApiKey }) =
       }
 
       setStatus('parsing');
-      setStatusMsg(
-        geminiApiKey && geminiApiKey.length > 15
-          ? 'Sending to Gemini AI for structured parsing…'
-          : 'Parsing with local heuristic engine…'
-      );
+      setStatusMsg('Parsing with local heuristic engine…');
 
-      // Step 2: LLM / heuristic structured extraction
-      const { parsed, usedLLM, error } = await parseStructuredCV(extraction.text, geminiApiKey);
+      // Step 2: Local structured extraction
+      const { parsed, usedLLM, error } = await parseStructuredCV(extraction.text);
 
       setStatus('done');
       setParseResult({ usedLLM, fileName: file.name });
@@ -105,7 +100,7 @@ const CVUploadZone: React.FC<CVUploadZoneProps> = ({ onParsed, geminiApiKey }) =
 
       onParsed(parsed, extraction.text);
     },
-    [geminiApiKey, onParsed]
+    [onParsed]
   );
 
   const handleDrop = useCallback(
@@ -168,7 +163,7 @@ const CVUploadZone: React.FC<CVUploadZoneProps> = ({ onParsed, geminiApiKey }) =
             <div className="flex items-center gap-1.5 mt-1 bg-indigo-600/10 dark:bg-indigo-500/20 px-3 py-1 rounded-full">
               <Brain className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
               <span className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
-                {geminiApiKey && geminiApiKey.length > 15 ? 'Gemini AI will parse' : 'Smart local parser'} → auto-fills all fields
+                Smart local parser → auto-fills all fields
               </span>
             </div>
           </div>
@@ -375,9 +370,6 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
   const [parsedCV, setParsedCV] = useState<ParsedCV | null>(null);
   const [showUploadZone, setShowUploadZone] = useState(!candidateToEdit);
 
-  // Read Gemini API key from localStorage or .env
-  const geminiApiKey = localStorage.getItem('ats_gemini_key') || (import.meta.env.VITE_GEMINI_API_KEY as string) || undefined;
-
   /** Called when CV upload + parse completes — auto-fills form fields */
   const handleCVParsed = useCallback((parsed: ParsedCV, rawText: string) => {
     setParsedCV(parsed);
@@ -436,7 +428,7 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
       };
 
       if (autoRunAi && selectedJob) {
-        const evaluation = await evaluateCandidateCV(candidateBase, selectedJob, geminiApiKey);
+        const evaluation = await evaluateCandidateCV(candidateBase, selectedJob);
         candidateBase.aiEvaluation = evaluation;
       }
 
@@ -497,7 +489,7 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
             </div>
 
             {showUploadZone && (
-              <CVUploadZone onParsed={handleCVParsed} geminiApiKey={geminiApiKey} />
+              <CVUploadZone onParsed={handleCVParsed} />
             )}
 
             {/* Parsed CV Preview */}

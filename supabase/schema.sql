@@ -77,26 +77,68 @@ ALTER TABLE public.candidates ENABLE ROW LEVEL SECURITY;
 -- 6. Helper Function: Is User Admin?
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
+  SELECT EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role = 'admin'
+    WHERE id = (SELECT auth.uid()) AND role = 'admin'
   );
+$$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '';
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, full_name, role, company_name)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data ->> 'full_name', NEW.email, 'New customer'),
+    'customer',
+    NULLIF(NEW.raw_user_meta_data ->> 'company_name', '')
+  )
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = '';
 
--- 7. RLS Policies: Allow Authenticated & Anon Access for seamless onboarding
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- 7. RLS Policies: customers are tenant-scoped; admins retain delegation access.
 DROP POLICY IF EXISTS "Profiles select all" ON public.profiles;
-CREATE POLICY "Profiles select all" ON public.profiles FOR SELECT USING (true);
-
 DROP POLICY IF EXISTS "Profiles insert/update" ON public.profiles;
-CREATE POLICY "Profiles insert/update" ON public.profiles FOR ALL USING (true) WITH CHECK (true);
-
+DROP POLICY IF EXISTS "Profiles public policy" ON public.profiles;
 DROP POLICY IF EXISTS "Jobs public policy" ON public.jobs;
-CREATE POLICY "Jobs public policy" ON public.jobs FOR ALL USING (true) WITH CHECK (true);
-
 DROP POLICY IF EXISTS "Candidates public policy" ON public.candidates;
-CREATE POLICY "Candidates public policy" ON public.candidates FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Profiles select own or admin" ON public.profiles;
+CREATE POLICY "Profiles select own or admin" ON public.profiles
+  FOR SELECT TO authenticated
+  USING (id = (SELECT auth.uid()) OR public.is_admin());
+
+DROP POLICY IF EXISTS "Jobs tenant access" ON public.jobs;
+CREATE POLICY "Jobs tenant access" ON public.jobs
+  FOR ALL TO authenticated
+  USING (customer_id = (SELECT auth.uid()) OR public.is_admin())
+  WITH CHECK (customer_id = (SELECT auth.uid()) OR public.is_admin());
+
+DROP POLICY IF EXISTS "Candidates tenant access" ON public.candidates;
+CREATE POLICY "Candidates tenant access" ON public.candidates
+  FOR ALL TO authenticated
+  USING (customer_id = (SELECT auth.uid()) OR public.is_admin())
+  WITH CHECK (
+    (customer_id = (SELECT auth.uid()) OR public.is_admin())
+    AND EXISTS (
+      SELECT 1 FROM public.jobs
+      WHERE jobs.id = candidates.job_id
+        AND jobs.customer_id = candidates.customer_id
+    )
+  );
+
+REVOKE ALL ON public.profiles FROM PUBLIC, anon;
+REVOKE INSERT, UPDATE, DELETE ON public.profiles FROM authenticated;
+REVOKE ALL ON public.jobs, public.candidates FROM PUBLIC, anon;
+GRANT SELECT ON public.profiles TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.jobs, public.candidates TO authenticated;
 
 -- 8. Helpful Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_jobs_customer_id ON public.jobs(customer_id);

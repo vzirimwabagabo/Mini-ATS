@@ -195,7 +195,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {/* Quick Demo Role Switcher */}
-          <div className="hidden lg:flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+          {!isSupabaseConfigured && import.meta.env.DEV && <div className="hidden lg:flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => switchUserRoleDemo('admin')}
@@ -218,7 +218,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               Customer
             </button>
-          </div>
+          </div>}
 
           {/* User profile capsule */}
           <div className="flex items-center gap-2 pl-2 border-l border-slate-200 dark:border-slate-700">

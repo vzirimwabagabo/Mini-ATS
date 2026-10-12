@@ -79,7 +79,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({ isOpen, onClose, initial
             <div className="space-y-4">
               <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/60 rounded-xl">
                 <p className="font-semibold text-indigo-950 dark:text-indigo-200">
-                  Last Updated: October 2026 | Compliant with GDPR (EU), CCPA (California), and Global Data Protection Standards
+                  Updated October 2026 | Review and adapt this notice to your deployment and legal requirements before production use.
                 </p>
               </div>
 
@@ -100,11 +100,11 @@ export const LegalModal: React.FC<LegalModalProps> = ({ isOpen, onClose, initial
 
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">3. Third-Party Sub-Processors</h3>
               <p>
-                Data is stored and processed with industry-leading infrastructure partners:
+                When cloud mode is configured, application data is sent to the Supabase project selected for this browser. Project access, retention, and provider terms must be reviewed by the deploying organization.
               </p>
               <ul className="list-disc list-inside space-y-1 pl-2">
-                <li><strong>Supabase Inc.:</strong> Cloud PostgreSQL database hosting with Row-Level Security (RLS) and encryption-at-rest.</li>
-                <li><strong>Google Cloud (Gemini API):</strong> Resume parsing and heuristic assistance. Candidate data sent via API is processed statelessly and is NOT stored or used to train Google's base foundation models.</li>
+                <li><strong>Supabase Inc.:</strong> Cloud database and authentication when configured. Tenant isolation depends on applying and maintaining the supplied RLS policies in the selected project.</li>
+                <li><strong>Google Cloud (Gemini API):</strong> The current browser workflow does not send candidate data to Gemini. LLM calls are disabled in the client because API keys cannot be kept secret in a browser bundle. Any future server-side integration must disclose provider-specific processing and retention before activation.</li>
               </ul>
 
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">4. Data Subject Rights (GDPR / CCPA)</h3>
@@ -181,23 +181,23 @@ export const LegalModal: React.FC<LegalModalProps> = ({ isOpen, onClose, initial
             <div className="space-y-4">
               <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-xl">
                 <p className="font-semibold text-emerald-950 dark:text-emerald-200">
-                  Data Protection Agreement (DPA) & Infrastructure Security Measures
+                  Security configuration summary (not a DPA or certification)
                 </p>
               </div>
 
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">1. Encryption & Data Isolation</h3>
               <p>
-                All data is encrypted in transit using TLS 1.3 and at rest using AES-256. Multi-tenancy is enforced at the PostgreSQL database layer via Row Level Security (RLS) policies, preventing unauthorized cross-tenant data leakage.
+                Cloud requests use HTTPS. The app does not configure or verify provider encryption-at-rest settings. The supplied schema defines tenant-scoped Row Level Security (RLS), but existing projects must apply and test those policies before use.
               </p>
 
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">2. SOC 2 Type II & ISO 27001 Alignment</h3>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">2. Provider Controls</h3>
               <p>
-                Infrastructure hosted by Supabase and Google Cloud operates under SOC 2 Type II, ISO 27001, and HIPAA compliance certifications. Automated backups are captured daily with point-in-time recovery.
+                Provider certifications, backup schedules, point-in-time recovery, and data retention depend on the selected provider, project, and subscription. This application does not configure or verify those controls; review the applicable provider documentation and agreements.
               </p>
 
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">3. Access Controls & Audit Trails</h3>
               <p>
-                Access to candidate records is role-gated. Sensitive administrative actions, candidate deletions, and account creations are logged with timestamps.
+                Cloud data access is intended to be restricted by Supabase Auth and RLS. The application does not currently maintain a separate audit log for candidate changes, deletions, or account administration.
               </p>
             </div>
           )}
@@ -212,7 +212,7 @@ export const LegalModal: React.FC<LegalModalProps> = ({ isOpen, onClose, initial
 
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">1. Strictly Necessary Storage</h3>
               <p>
-                Mini ATS uses browser LocalStorage solely to maintain authenticated session tokens, user theme preferences (Light/Dark/Midnight), and active customer impersonation state.
+                Browser LocalStorage may contain Supabase Auth session tokens, the configured Supabase project URL and public anon key, theme preferences, and local demo profiles, jobs, and candidate records. Same-origin scripts can access this storage; never use local demo mode for real candidate data.
               </p>
 
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">2. Zero Tracking or Advertising Cookies</h3>

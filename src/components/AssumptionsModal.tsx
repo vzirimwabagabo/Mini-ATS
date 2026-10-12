@@ -39,12 +39,12 @@ Here is the summary of assumptions made while designing and building the Mini AT
   c. Human-in-the-loop: AI acts strictly as an advisory copilot; recruiter always retains final stage advancement authority.
 
 5. BACKEND & SUPABASE ARCHITECTURE:
-- Supabase (PostgreSQL) backend with Row Level Security (RLS) policies enforcing multi-tenancy.
-- Dual persistence: Works natively with real Supabase credentials, with a pre-seeded local persistence layer for immediate, friction-free testing.
+- Supabase (PostgreSQL) backend with tenant-scoped Row Level Security (RLS) policies.
+- Local persistence is a development-only role simulation, not authentication, and must not be used for production or real candidate data.
 
 Platform Access:
-- Admin Login: admin@miniats.com / password123
-- Customer Login: sarah@techwave.io / password123
+- Local demo identities are simulated in development and do not use passwords.
+- Cloud admin account creation uses a Supabase Edge Function that checks the caller's authenticated admin role; deploy and configure it before enabling production account management.
 
 Best regards,
 Mini ATS Engineering Team`;

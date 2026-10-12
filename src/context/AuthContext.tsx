@@ -16,6 +16,8 @@ interface AuthContextType {
   createAccount: (email: string, password: string, fullName: string, role: UserRole, companyName?: string) => Promise<UserProfile>;
   updateAccount: (userId: string, fullName: string, role: UserRole, companyName?: string) => Promise<UserProfile>;
   setAccountActive: (userId: string, isActive: boolean) => Promise<UserProfile>;
+  requestPasswordReset: (email: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
   refreshProfiles: () => Promise<void>;
   switchUserRoleDemo: (role: UserRole) => void;
 }
@@ -243,6 +245,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return updated;
   };
 
+  const requestPasswordReset = async (resetEmail: string): Promise<void> => {
+    const supabase = getSupabaseClient();
+    if (supabase && getSupabaseConfig().isConfigured) {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+        redirectTo: window.location.origin
+      });
+      if (error) throw new Error(error.message);
+    } else {
+      // Local/demo fallback
+      const profiles = getStoredProfiles();
+      const exists = profiles.some(p => p.email.toLowerCase() === resetEmail.trim().toLowerCase());
+      if (!exists) throw new Error('No user account found with that email address.');
+    }
+  };
+
+  const updatePassword = async (newPassword: string): Promise<void> => {
+    const supabase = getSupabaseClient();
+    if (supabase && getSupabaseConfig().isConfigured) {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      if (error) throw new Error(error.message);
+    }
+  };
+
   const switchUserRoleDemo = (role: UserRole) => {
     if (!import.meta.env.DEV || getSupabaseConfig().isConfigured) return;
     const profiles = getStoredProfiles();
@@ -273,6 +300,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createAccount,
         updateAccount,
         setAccountActive,
+        requestPasswordReset,
+        updatePassword,
         refreshProfiles,
         switchUserRoleDemo
       }}

@@ -51,6 +51,58 @@ html.theme-midnight, body.theme-midnight {
   border-color: #1e293b !important;
 }
 
+/* Form input, textarea, and select theme consistency */
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea {
+  background-color: #1e293b;
+  color: #f8fafc;
+  border-color: #334155;
+}
+
+.dark select {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155;
+}
+
+.theme-midnight input:not([type="checkbox"]):not([type="radio"]),
+.theme-midnight textarea {
+  background-color: #082328 !important;
+  color: #f0fdf4 !important;
+  border-color: #11414a !important;
+}
+
+.theme-midnight select {
+  background-color: #082328 !important;
+  color: #f0fdf4 !important;
+  border-color: #11414a !important;
+}
+
+/* Explicit styling for select dropdown options in all browsers */
+select option {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.dark select option,
+.theme-dark select option {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+.theme-midnight select option {
+  background-color: #061c20 !important;
+  color: #f0fdf4 !important;
+}
+
+/* Placeholders */
+.dark input::placeholder,
+.dark textarea::placeholder,
+.theme-midnight input::placeholder,
+.theme-midnight textarea::placeholder {
+  color: #94a3b8;
+}
+
 /* Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

@@ -23,6 +23,7 @@ import { JobListModal } from './components/JobListModal';
 import { AdminAccountModal } from './components/AdminAccountModal';
 import { AssumptionsModal } from './components/AssumptionsModal';
 import { DatabaseSetupWizardModal } from './components/DatabaseSetupWizardModal';
+import { Footer } from './components/Footer';
 
 const ATSApp: React.FC = () => {
   const { currentUser, effectiveUser, impersonatedCustomer, allProfiles } = useAuth();
@@ -160,6 +161,13 @@ const ATSApp: React.FC = () => {
           onResetDemoData={resetDemoData}
         />
       )}
+      <Footer
+        jobs={jobs}
+        candidates={candidates}
+        onOpenAssumptions={() => setIsAssumptionsModalOpen(true)}
+        onOpenDatabaseWizard={() => setIsDatabaseWizardOpen(true)}
+        onResetData={resetDemoData}
+      />
 
       {/* Candidate Profile & AI Intelligence Drawer */}
       <CandidateDetailDrawer

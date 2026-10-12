@@ -35,7 +35,7 @@ Here is the summary of assumptions made while designing and building the Mini AT
 - Core metrics generated: 0-100% Suitability Match Score, Executive Summary, Key Strengths, and Identified Gaps/Probes.
 - Architectural approach for production:
   a. Ingestion: OCR / PDF text extraction of candidate resumes + LinkedIn profile scraping.
-  b. Structured Embedding & LLM Scoring: Prompting an LLM (e.g. Gemini 1.5 Flash) with strict JSON schema to evaluate qualification overlap without demographic bias.
+  b. Structured Embedding & LLM Scoring: Prompting an LLM (e.g. Gemini 3.8 Flash) with strict JSON schema to evaluate qualification overlap without demographic bias.
   c. Human-in-the-loop: AI acts strictly as an advisory copilot; recruiter always retains final stage advancement authority.
 
 5. BACKEND & SUPABASE ARCHITECTURE:
@@ -63,7 +63,7 @@ Mini ATS Engineering Team`;
       >
         <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/60">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-indigo-600 text-white rounded-lg">
+            <div className="p-2 bg-indigo-600 text-white rounded-lg shadow-xs">
               <FileText className="w-5 h-5" />
             </div>
             <div>
@@ -84,19 +84,19 @@ Mini ATS Engineering Team`;
           </button>
         </div>
 
-        <div className="p-6 max-h-[75vh] overflow-y-auto space-y-5 text-xs text-slate-700 leading-relaxed">
+        <div className="p-6 max-h-[75vh] overflow-y-auto space-y-5 text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
           {/* Quick Copy Email Button */}
-          <div className="p-3.5 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between">
+          <div className="p-3.5 bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/60 rounded-xl flex items-center justify-between gap-3">
             <div>
-              <span className="font-bold text-indigo-950 block">Ready-to-Send Email Summary</span>
-              <span className="text-[11px] text-indigo-700">
+              <span className="font-bold text-indigo-950 dark:text-indigo-200 block">Ready-to-Send Email Summary</span>
+              <span className="text-[11px] text-indigo-700 dark:text-indigo-300">
                 Click below to copy the complete assumptions email text to your clipboard.
               </span>
             </div>
             <button
               type="button"
               onClick={handleCopyEmail}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors shadow-xs shrink-0"
             >
               {copied ? (
                 <>
@@ -113,9 +113,9 @@ Mini ATS Engineering Team`;
           </div>
 
           {/* Section 1: Customer Needs & Preferences */}
-          <div className="space-y-2">
-            <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
-              <Users className="w-4 h-4 text-indigo-600" />
+          <div className="space-y-2 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+              <Users className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
               1. Customer Needs & Preferences
             </h3>
             <p>
@@ -124,9 +124,9 @@ Mini ATS Engineering Team`;
           </div>
 
           {/* Section 2: Admin Delegation */}
-          <div className="space-y-2">
-            <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
-              <Shield className="w-4 h-4 text-purple-600" />
+          <div className="space-y-2 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+              <Shield className="w-4 h-4 text-purple-600 dark:text-purple-400" />
               2. Admin Delegation ("Act on Behalf of Customer")
             </h3>
             <p>
@@ -135,9 +135,9 @@ Mini ATS Engineering Team`;
           </div>
 
           {/* Section 3: Compact Kanban & UX */}
-          <div className="space-y-2">
-            <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-blue-600" />
+          <div className="space-y-2 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+              <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               3. Compact Kanban Layout
             </h3>
             <p>
@@ -146,31 +146,31 @@ Mini ATS Engineering Team`;
           </div>
 
           {/* Section 4: AI Resume Screening */}
-          <div className="space-y-2">
-            <h3 className="font-bold text-sm text-slate-900 flex items-center gap-1.5">
-              <Brain className="w-4 h-4 text-emerald-600" />
+          <div className="space-y-2 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+              <Brain className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               4. AI-Based CV Assessment Strategy
             </h3>
             <p>
               Our solution includes a real-time AI CV screening function (`evaluateCandidateCV`). It computes:
             </p>
-            <ul className="list-disc list-inside space-y-1 pl-2 text-slate-600">
-              <li><strong>Match Score (0-100%)</strong> based on skills and experience overlap.</li>
+            <ul className="list-disc list-inside space-y-1 pl-2 text-slate-600 dark:text-slate-400">
+              <li><strong>Match Score (0-100%)</strong> with calibrated multi-dimensional scoring.</li>
               <li><strong>Executive Summary</strong> highlighting suitability for the role.</li>
               <li><strong>Key Strengths & Identified Gaps</strong> for recruiter interview probing.</li>
               <li><strong>Recommended Next Stage</strong> with a 1-click "Apply Recommendation" action.</li>
             </ul>
-            <p className="mt-2 italic text-slate-500">
+            <p className="mt-2 italic text-slate-500 dark:text-slate-400">
               In production, we recommend deploying an LLM Edge Function on Supabase using Gemini/Claude with blinded resume parsing (removing candidate names, gender pronouns, and photos) to eliminate demographic bias.
             </p>
           </div>
         </div>
 
-        <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex justify-end">
           <button
             type="button"
             onClick={onClose}
-            className="text-xs font-semibold px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg transition-colors"
+            className="text-xs font-semibold px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg transition-colors"
           >
             Close
           </button>

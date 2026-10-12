@@ -8,7 +8,9 @@ import {
   Rows3, 
   Plus, 
   Briefcase, 
-  X
+  X,
+  Shrink,
+  Maximize2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -82,6 +84,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [selectedJobId, setSelectedJobId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [compactMode, setCompactMode] = useState<boolean>(true);
+  const [autoShrink, setAutoShrink] = useState<boolean>(true);
+  const [manuallyExpanded, setManuallyExpanded] = useState<Record<string, boolean>>({});
   const [draggingOverStage, setDraggingOverStage] = useState<CandidateStage | null>(null);
 
   // Filter candidates according to user criteria: Job and Candidate Name (or email)
@@ -108,9 +112,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   // Drag & drop handlers
   const handleDragOver = (e: React.DragEvent, stageId: CandidateStage) => {
     e.preventDefault();
-    if (draggingOverStage !== stageId) {
-      setDraggingOverStage(stageId);
-    }
+    setDraggingOverStage(stageId);
   };
 
   const handleDragLeave = () => {
@@ -129,10 +131,17 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
   };
 
+  const toggleColumnManualExpand = (stageId: string) => {
+    setManuallyExpanded((prev) => ({
+      ...prev,
+      [stageId]: !prev[stageId],
+    }));
+  };
+
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-slate-100/90 dark:bg-slate-950 p-4 sm:p-6 overflow-hidden transition-colors">
+    <div className="flex-1 flex flex-col min-h-0 bg-slate-100/90 dark:bg-slate-950 p-3 sm:p-4 md:p-6 overflow-hidden transition-colors">
       {/* Filters and Controls Bar */}
-      <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs mb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 transition-colors">
+      <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs mb-3 sm:mb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 transition-colors">
         {/* Left Side: Job filter & Search */}
         <div className="flex flex-wrap items-center gap-2.5 flex-1">
           {/* Job Filter Dropdown */}
@@ -181,35 +190,60 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
         </div>
 
-        {/* Right Side: Compact View Toggle & Quick Actions */}
+        {/* Right Side: View Controls, Auto-Shrink Toggle, & Quick Actions */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Auto-Shrink Empty Columns Toggle */}
+          <button
+            type="button"
+            onClick={() => setAutoShrink(!autoShrink)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-xl border transition-all ${
+              autoShrink
+                ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 shadow-2xs'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:text-slate-900'
+            }`}
+            title="Automatically shrink empty columns to focus space on active candidates"
+          >
+            {autoShrink ? (
+              <>
+                <Shrink className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                <span className="hidden sm:inline">Auto-Shrink Empty</span>
+                <span className="sm:hidden">Auto-Shrink</span>
+              </>
+            ) : (
+              <>
+                <Maximize2 className="w-3.5 h-3.5 text-slate-400" />
+                <span>Equal Widths</span>
+              </>
+            )}
+          </button>
+
           {/* Compact View Toggle */}
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700">
             <button
               type="button"
               onClick={() => setCompactMode(true)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
                 compactMode
                   ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
-              title="Compact Kanban layout"
+              title="Compact Kanban layout (dense cards)"
             >
               <Rows3 className="w-3.5 h-3.5" />
-              Compact View
+              <span className="hidden sm:inline">Compact</span>
             </button>
             <button
               type="button"
               onClick={() => setCompactMode(false)}
-              className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
                 !compactMode
                   ? 'bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
-              title="Comfortable Cards with Details"
+              title="Comfortable Cards with Tags & Bio Preview"
             >
               <LayoutGrid className="w-3.5 h-3.5" />
-              Comfortable
+              <span className="hidden sm:inline">Comfortable</span>
             </button>
           </div>
 
@@ -217,30 +251,30 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           <button
             type="button"
             onClick={onOpenManageJobs}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-colors shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-colors shadow-xs"
           >
             <Briefcase className="w-3.5 h-3.5 text-slate-500" />
-            Jobs ({jobs.length})
+            <span>Jobs ({jobs.length})</span>
           </button>
 
           {/* Post Job */}
           <button
             type="button"
             onClick={onOpenNewJob}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 rounded-xl transition-colors shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 border border-indigo-200 dark:border-indigo-800 rounded-xl transition-colors shadow-xs"
           >
             <Plus className="w-3.5 h-3.5" />
-            Post Job
+            <span>Post Job</span>
           </button>
 
           {/* Add Candidate */}
           <button
             type="button"
             onClick={() => onOpenNewCandidate()}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
-            Add Candidate
+            <span>Add Candidate</span>
           </button>
         </div>
       </div>
@@ -248,7 +282,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       {/* Active Filter Notice */}
       {(selectedJobId !== 'all' || searchQuery.trim() !== '') && (
         <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-2 px-1">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <Filter className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             <span>
               Showing <strong>{filteredCandidates.length}</strong> of{' '}
@@ -279,12 +313,62 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         </div>
       )}
 
-      {/* Kanban Board Columns Container */}
+      {/* Kanban Board Columns Container — Content-Aware Auto-Shrinking */}
       <div className="flex-1 overflow-x-auto min-h-0 pb-2">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 min-w-[1100px] h-full">
+        <div className="flex items-stretch gap-3.5 min-w-[780px] h-full">
           {COLUMNS.map((col) => {
             const columnCandidates = filteredCandidates.filter((c) => c.stage === col.id);
             const isOver = draggingOverStage === col.id;
+            const isEmpty = columnCandidates.length === 0;
+            const isManuallyExpanded = manuallyExpanded[col.id];
+
+            // If autoShrink is active, empty column shrinks unless it's being dragged over or manually expanded
+            const isShrunk = autoShrink && isEmpty && !isOver && !isManuallyExpanded;
+
+            if (isShrunk) {
+              return (
+                <div
+                  key={col.id}
+                  onDragOver={(e) => handleDragOver(e, col.id)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, col.id)}
+                  onClick={() => toggleColumnManualExpand(col.id)}
+                  className={`flex flex-col items-center justify-between py-3.5 px-2 rounded-2xl border transition-all duration-300 ease-in-out cursor-pointer group select-none ${
+                    col.bg
+                  } border-slate-200 dark:border-slate-800 hover:border-indigo-400 hover:bg-indigo-50/30 dark:hover:bg-slate-900 w-14 sm:w-16 min-w-[56px] sm:min-w-[64px] shrink-0 border-t-4 ${col.color}`}
+                  title={`${col.title} (Empty — click or drag candidate to expand)`}
+                >
+                  {/* Top: Count & indicator */}
+                  <div className="flex flex-col items-center gap-1">
+                    <span
+                      className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${col.badge}`}
+                    >
+                      0
+                    </span>
+                  </div>
+
+                  {/* Middle: Vertical Title */}
+                  <div className="flex-1 flex items-center justify-center my-4">
+                    <span className="[writing-mode:vertical-rl] rotate-180 font-bold text-[11px] text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 tracking-wider uppercase transition-colors">
+                      {col.title}
+                    </span>
+                  </div>
+
+                  {/* Bottom: Quick Add Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenNewCandidate(col.id);
+                    }}
+                    className="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    title={`Add candidate directly to ${col.title}`}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              );
+            }
 
             return (
               <div
@@ -292,11 +376,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 onDragOver={(e) => handleDragOver(e, col.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, col.id)}
-                className={`flex flex-col rounded-2xl border transition-all h-full max-h-[calc(100vh-230px)] overflow-hidden ${
+                className={`flex flex-col rounded-2xl border transition-all duration-300 ease-in-out h-full overflow-hidden flex-1 min-w-[240px] sm:min-w-[260px] ${
                   col.bg
                 } ${
                   isOver
-                    ? 'border-indigo-500 ring-2 ring-indigo-400/40 bg-indigo-50/50 dark:bg-indigo-950/40'
+                    ? 'border-indigo-500 ring-2 ring-indigo-400/40 bg-indigo-50/50 dark:bg-indigo-950/40 scale-[1.01]'
                     : 'border-slate-200 dark:border-slate-800'
                 }`}
               >
@@ -315,14 +399,26 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     </span>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => onOpenNewCandidate(col.id)}
-                    className="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
-                    title={`Add candidate directly to ${col.title}`}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    {isEmpty && autoShrink && (
+                      <button
+                        type="button"
+                        onClick={() => toggleColumnManualExpand(col.id)}
+                        className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-md transition-colors text-[10px]"
+                        title="Shrink empty column"
+                      >
+                        <Shrink className="w-3 h-3" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onOpenNewCandidate(col.id)}
+                      className="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+                      title={`Add candidate directly to ${col.title}`}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Cards List with Scroll */}

@@ -105,7 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setAllProfiles(profiles);
               }
             } else {
-              await supabase.auth.signOut();
+              await supabase.auth.signOut({ scope: 'local' });
             }
           }
         }
@@ -161,7 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .single();
             if (profile) {
               if (profile.is_active === false) {
-                await supabase.auth.signOut();
+                await supabase.auth.signOut({ scope: 'local' });
                 throw new Error('Your account is pending administrator approval. Please wait for an administrator to activate your account.');
               }
               const u: UserProfile = {
@@ -180,7 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               return true;
             }
           }
-          if (data?.user) await supabase.auth.signOut();
+          if (data?.user) await supabase.auth.signOut({ scope: 'local' });
           return false;
         } catch (err: any) {
           if (err?.message?.includes('pending administrator approval')) {
@@ -225,7 +225,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: 'local' });
       } catch {
         // ignore
       }
@@ -295,7 +295,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
         redirectTo: window.location.origin
       });
-      if (error) throw new Error(error.message);
+      if (error) {
+        if (error.message?.toLowerCase().includes('redirect') || (error as any).status === 400) {
+          throw new Error(
+            `Supabase rejected redirect URL "${window.location.origin}". Add this URL (or "https://*.vercel.app/**") to Supabase Dashboard > Authentication > URL Configuration > Redirect URLs.`
+          );
+        }
+        if ((error as any).status === 429 || error.message?.toLowerCase().includes('rate limit')) {
+          throw new Error('Supabase email rate limit exceeded. Please wait a few minutes before requesting another reset email.');
+        }
+        throw new Error(error.message);
+      }
     } else {
       // Local/demo fallback
       const profiles = getStoredProfiles();

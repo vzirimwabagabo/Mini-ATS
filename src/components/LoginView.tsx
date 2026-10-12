@@ -61,6 +61,11 @@ export const LoginView: React.FC = () => {
     setPendingRegisteredInfo(null);
     try {
       if (isSignUp) {
+        if (password.length < 6) {
+          setErrorMsg('Password must be at least 6 characters long.');
+          setLoading(false);
+          return;
+        }
         const cleanEmail = email.trim();
         const cleanName = fullName.trim() || email.split('@')[0];
         const cleanCompany = companyName.trim() || 'My Company';

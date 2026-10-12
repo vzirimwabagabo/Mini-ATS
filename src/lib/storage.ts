@@ -773,6 +773,15 @@ export async function createNewAccount(
     });
 
     if (authErr) {
+      if ((authErr as any).status === 429 || authErr.message?.toLowerCase().includes('rate limit') || authErr.message?.toLowerCase().includes('security purposes')) {
+        throw new Error('Supabase email rate limit reached. On free tier Supabase accounts, auth emails and signups are rate-limited. Please wait a minute (or up to an hour if hourly SMTP quota was hit) before trying again.');
+      }
+      if ((authErr as any).status === 400 && authErr.message?.toLowerCase().includes('password')) {
+        throw new Error('Password does not meet requirements. Please enter at least 6 characters.');
+      }
+      if (authErr.message?.toLowerCase().includes('database error saving new user')) {
+        throw new Error('Database trigger error: Please verify the latest SQL migrations (profiles table and on_auth_user_created trigger) are applied in your Supabase project.');
+      }
       throw new Error(authErr.message || 'Cloud account creation failed. Verify the email and password requirements, then try again.');
     }
     if (!authData?.user) {
@@ -782,8 +791,8 @@ export async function createNewAccount(
       throw new Error('An account with this email address already exists. Please sign in or use password reset.');
     }
 
-    // Always clear session so unapproved customer accounts are not left active in browser
-    await supabase.auth.signOut();
+    // Always clear session locally so unapproved customer accounts are not left active in browser
+    await supabase.auth.signOut({ scope: 'local' });
 
     return {
       id: authData.user.id,

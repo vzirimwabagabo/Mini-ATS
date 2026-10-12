@@ -17,9 +17,17 @@ const allowedOrigins = [...new Set([
   .filter(Boolean),
 ])];
 
+function isOriginAllowed(origin: string | null): boolean {
+  if (!origin) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  // Allow all Cloudflare Pages deployment URLs (*.pages.dev)
+  if (/^https:\/\/[a-z0-9-]+\.pages\.dev$/i.test(origin)) return true;
+  return false;
+}
+
 function respond(body: Record<string, unknown>, status: number, origin: string | null) {
   const headers = new Headers({ 'Content-Type': 'application/json' });
-  if (origin && allowedOrigins.includes(origin)) {
+  if (origin && isOriginAllowed(origin)) {
     headers.set('Access-Control-Allow-Origin', origin);
     headers.set('Vary', 'Origin');
   }
@@ -30,7 +38,7 @@ Deno.serve(async (request) => {
   const origin = request.headers.get('Origin');
 
   if (request.method === 'OPTIONS') {
-    if (!origin || !allowedOrigins.includes(origin)) return new Response(null, { status: 403 });
+    if (!origin || !isOriginAllowed(origin)) return new Response(null, { status: 403 });
     return new Response(null, {
       status: 204,
       headers: {
@@ -43,7 +51,7 @@ Deno.serve(async (request) => {
   }
 
   if (request.method !== 'POST') return respond({ error: 'Method not allowed.' }, 405, origin);
-  if (origin && !allowedOrigins.includes(origin)) return respond({ error: 'Origin not allowed.' }, 403, origin);
+  if (origin && !isOriginAllowed(origin)) return respond({ error: 'Origin not allowed.' }, 403, origin);
   if (!supabaseUrl || !anonKey || !serviceRoleKey || allowedOrigins.length === 0) {
     return respond({ error: 'Account provisioning is not configured.' }, 503, origin);
   }

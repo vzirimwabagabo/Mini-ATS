@@ -772,8 +772,11 @@ export async function createNewAccount(
       }
     });
 
-    if (authErr || !authData?.user) {
-      throw new Error('Cloud account creation failed. Verify the email and password requirements, then try again.');
+    if (authErr) {
+      throw new Error(authErr.message || 'Cloud account creation failed. Verify the email and password requirements, then try again.');
+    }
+    if (!authData?.user) {
+      throw new Error('Cloud account creation failed. No user was returned by Supabase.');
     }
 
     return {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Shield, User, Lock, Mail, ArrowRight, Sparkles, Building, CheckCircle2, Eye, EyeOff, Zap, Sun, Moon } from 'lucide-react';
+import { Shield, User, Lock, Mail, ArrowRight, Sparkles, Building, CheckCircle2, Eye, EyeOff, Zap, Sun, Moon, Clock, AlertCircle, CheckCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 export const LoginView: React.FC = () => {
@@ -16,11 +16,13 @@ export const LoginView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [pendingRegisteredInfo, setPendingRegisteredInfo] = useState<{ email: string; fullName: string; companyName: string } | null>(null);
 
   const handleQuickLogin = async (demoEmail: string) => {
     setLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
+    setPendingRegisteredInfo(null);
     try {
       await login(demoEmail);
     } catch (err: any) {
@@ -37,6 +39,7 @@ export const LoginView: React.FC = () => {
     setLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
+    setPendingRegisteredInfo(null);
     try {
       await requestPasswordReset(email.trim());
       setSuccessMsg(`Password reset instructions sent to ${email.trim()}. Please check your inbox.`);
@@ -54,18 +57,26 @@ export const LoginView: React.FC = () => {
     setLoading(true);
     setErrorMsg('');
     setSuccessMsg('');
+    setPendingRegisteredInfo(null);
     try {
       if (isSignUp) {
+        const cleanEmail = email.trim();
+        const cleanName = fullName.trim() || email.split('@')[0];
+        const cleanCompany = companyName.trim() || 'My Company';
         await createAccount(
-          email.trim(),
+          cleanEmail,
           password,
-          fullName.trim() || email.split('@')[0],
+          cleanName,
           'customer',
-          companyName.trim() || 'My Company'
+          cleanCompany
         );
         setIsSignUp(false);
         setPassword('');
-        setSuccessMsg('Registration submitted! Your organization account is pending administrator approval before you can post jobs.');
+        setPendingRegisteredInfo({
+          email: cleanEmail,
+          fullName: cleanName,
+          companyName: cleanCompany,
+        });
       } else {
         const ok = await login(email.trim(), password);
         if (!ok) {
@@ -180,6 +191,68 @@ export const LoginView: React.FC = () => {
             </div>
           </div>}
 
+          {pendingRegisteredInfo ? (
+            <div className="space-y-4 text-center py-2 animate-in fade-in zoom-in-95 duration-200">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700/80 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-md">
+                <Clock className="w-7 h-7" />
+              </div>
+
+              <div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                  <Clock className="w-3 h-3" />
+                  Status: Pending Approval
+                </span>
+                <h3 className="mt-2 text-lg font-black text-slate-900 dark:text-white">
+                  Registration Received!
+                </h3>
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-sm mx-auto">
+                  Your organization account has been created and is waiting for administrator approval before access is granted.
+                </p>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-slate-800/80 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-left text-xs space-y-2">
+                <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">
+                  <span>Organization:</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{pendingRegisteredInfo.companyName}</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">
+                  <span>Contact Name:</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">{pendingRegisteredInfo.fullName}</span>
+                </div>
+                <div className="flex justify-between items-center text-slate-500 dark:text-slate-400">
+                  <span>Registered Email:</span>
+                  <span className="font-mono text-[11px] text-slate-800 dark:text-slate-200">{pendingRegisteredInfo.email}</span>
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-xl text-left text-xs text-amber-900 dark:text-amber-200 space-y-1.5 leading-relaxed">
+                <div className="font-bold flex items-center gap-1.5 text-amber-800 dark:text-amber-300">
+                  <Shield className="w-3.5 h-3.5" />
+                  Why is approval required?
+                </div>
+                <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90">
+                  To safeguard job candidates and prevent fraudulent openings, all customer companies must be verified by a system administrator.
+                </p>
+                <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90">
+                  The administrator has been notified. Once approved, you can sign in directly with your email and password.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPendingRegisteredInfo(null);
+                  setIsSignUp(false);
+                  setErrorMsg('');
+                  setSuccessMsg('');
+                }}
+                className="w-full py-2.5 px-4 rounded-xl shadow-sm text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors flex items-center justify-center gap-1.5"
+              >
+                ← Return to Sign In
+              </button>
+            </div>
+          ) : (
+            <>
           <div className="mb-5 text-center text-xs text-slate-500 dark:text-slate-400">
             {isForgotPassword 
               ? 'Reset your password'
@@ -189,8 +262,22 @@ export const LoginView: React.FC = () => {
           </div>
 
           {errorMsg && (
-            <div className="mb-4 p-3 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs">
-              {errorMsg}
+            <div className={`mb-4 p-3 rounded-lg border text-xs flex items-start gap-2 ${
+              errorMsg.includes('pending administrator approval')
+                ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200'
+                : 'bg-rose-50 dark:bg-rose-950/50 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300'
+            }`}>
+              {errorMsg.includes('pending administrator approval') ? (
+                <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+              )}
+              <div>
+                {errorMsg.includes('pending administrator approval') && (
+                  <div className="font-bold mb-0.5">Account Pending Approval</div>
+                )}
+                <span>{errorMsg}</span>
+              </div>
             </div>
           )}
 
@@ -364,6 +451,8 @@ export const LoginView: React.FC = () => {
               </button>
             )}
           </div>
+          </>
+          )}
         </div>
       </div>
     </div>

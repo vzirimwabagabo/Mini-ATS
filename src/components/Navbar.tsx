@@ -10,7 +10,8 @@ import {
   Sun,
   Moon,
   Sparkles,
-  Zap
+  Zap,
+  Bell
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -130,16 +131,33 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </button>
 
-          {/* Admin Create Account Button */}
+          {/* Admin Create Account Button with pending approvals notification */}
           {isAdmin && (
             <button
               type="button"
               onClick={onOpenCreateAccount}
-              className="inline-flex items-center gap-1.5 text-xs font-bold bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 px-3 py-1.5 rounded-xl transition-colors"
-              title="Create new Admin or Customer accounts"
+              className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-xs ${
+                allProfiles.some((p) => p.role === 'customer' && p.isActive === false)
+                  ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 ring-2 ring-amber-400/80 animate-pulse font-extrabold'
+                  : 'bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+              }`}
+              title={
+                allProfiles.filter((p) => p.role === 'customer' && p.isActive === false).length > 0
+                  ? `${allProfiles.filter((p) => p.role === 'customer' && p.isActive === false).length} customer account(s) awaiting approval`
+                  : 'Create new Admin or Customer accounts'
+              }
             >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Create Account</span>
+              {allProfiles.some((p) => p.role === 'customer' && p.isActive === false) ? (
+                <Bell className="w-3.5 h-3.5 text-slate-950" />
+              ) : (
+                <UserPlus className="w-3.5 h-3.5" />
+              )}
+              <span className="hidden sm:inline">Accounts</span>
+              {allProfiles.filter((p) => p.role === 'customer' && p.isActive === false).length > 0 && (
+                <span className="bg-slate-950 text-amber-300 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-0.5 shadow-xs">
+                  {allProfiles.filter((p) => p.role === 'customer' && p.isActive === false).length} pending
+                </span>
+              )}
             </button>
           )}
 

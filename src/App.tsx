@@ -25,9 +25,10 @@ import { AssumptionsModal } from './components/AssumptionsModal';
 import { DatabaseSetupWizardModal } from './components/DatabaseSetupWizardModal';
 import { Footer } from './components/Footer';
 import { LegalModal, LegalDocType } from './components/LegalModal';
+import { Bell, Shield } from 'lucide-react';
 
 const ATSApp: React.FC = () => {
-  const { currentUser, effectiveUser, impersonatedCustomer, allProfiles } = useAuth();
+  const { currentUser, effectiveUser, impersonatedCustomer, allProfiles, refreshProfiles } = useAuth();
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -75,6 +76,27 @@ const ATSApp: React.FC = () => {
 
     loadData();
   }, [currentUser, effectiveUser, impersonatedCustomer]);
+
+  // Periodic background check for admin to detect newly registered customer accounts
+  useEffect(() => {
+    if (currentUser?.role !== 'admin') return;
+
+    const handleFocus = () => {
+      refreshProfiles().catch(() => {});
+    };
+    window.addEventListener('focus', handleFocus);
+
+    const interval = setInterval(() => {
+      refreshProfiles().catch(() => {});
+    }, 25000);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(interval);
+    };
+  }, [currentUser?.role, refreshProfiles]);
+
+  const pendingCustomerApprovals = allProfiles.filter((p) => p.role === 'customer' && p.isActive === false);
 
   if (!currentUser) {
     return <LoginView />;
@@ -161,6 +183,33 @@ const ATSApp: React.FC = () => {
         onOpenAssumptions={() => setIsAssumptionsModalOpen(true)}
         onOpenDatabaseWizard={() => setIsDatabaseWizardOpen(true)}
       />
+
+      {currentUser?.role === 'admin' && pendingCustomerApprovals.length > 0 && (
+        <aside
+          aria-label="Pending customer accounts approval alert"
+          className="bg-gradient-to-r from-amber-500/20 via-orange-500/15 to-amber-500/20 border-b border-amber-300 dark:border-amber-700/60 px-4 py-2.5 text-xs animate-in fade-in duration-150"
+        >
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-amber-950 dark:text-amber-200">
+              <span className="p-1 bg-amber-500 text-slate-950 rounded-lg font-black text-[10px] uppercase tracking-wide flex items-center gap-1 shadow-xs shrink-0">
+                <Bell className="w-3.5 h-3.5" />
+                Sign-Up Alert
+              </span>
+              <span className="leading-snug">
+                <strong>{pendingCustomerApprovals.length} new customer organization{pendingCustomerApprovals.length > 1 ? 's' : ''}</strong> ({pendingCustomerApprovals.map(p => p.companyName || p.fullName).slice(0, 3).join(', ')}{pendingCustomerApprovals.length > 3 ? '...' : ''}) registered and {pendingCustomerApprovals.length > 1 ? 'are' : 'is'} awaiting administrator approval before posting jobs.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAdminAccountModalOpen(true)}
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors shadow-xs flex items-center gap-1.5 self-start sm:self-auto shrink-0"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              Review & Approve ({pendingCustomerApprovals.length}) →
+            </button>
+          </div>
+        </aside>
+      )}
 
       <AnalyticsHeader candidates={candidates} jobs={jobs} />
 

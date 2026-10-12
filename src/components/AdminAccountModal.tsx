@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserProfile, UserRole } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { X, UserPlus, Shield, Building, Users, CheckCircle, Mail, Key, Pencil, Save, CircleOff, CircleCheck, Eye, EyeOff } from 'lucide-react';
+import { X, UserPlus, Shield, Building, Users, CheckCircle, Mail, Key, Pencil, Save, CircleOff, CircleCheck, Eye, EyeOff, Clock } from 'lucide-react';
 
 interface AdminAccountModalProps {
   isOpen: boolean;
@@ -9,7 +9,7 @@ interface AdminAccountModalProps {
 }
 
 export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, onClose }) => {
-  const { allProfiles, createAccount, updateAccount, setAccountActive, isSupabaseConfigured } = useAuth();
+  const { allProfiles, createAccount, updateAccount, setAccountActive, isSupabaseConfigured, refreshProfiles } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
@@ -21,6 +21,16 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
   const [companyName, setCompanyName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Whenever modal opens, refresh profiles and if any are pending approval, show list view directly
+  useEffect(() => {
+    if (isOpen) {
+      refreshProfiles().catch(() => {});
+      if (allProfiles.some((p) => p.role === 'customer' && p.isActive === false)) {
+        setActiveTab('list');
+      }
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -45,6 +55,8 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
     setActiveTab('create');
   };
 
+  const pendingCount = allProfiles.filter((p) => p.role === 'customer' && p.isActive === false).length;
+
   const handleSetActive = async (profile: UserProfile) => {
     const isActive = profile.isActive === false;
     if (!isActive && !confirm(`Deactivate ${profile.fullName}? They will lose access, but their jobs and candidates will be kept.`)) return;
@@ -53,7 +65,11 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
     setSuccessMessage('');
     try {
       await setAccountActive(profile.id, isActive);
-      setSuccessMessage(`${profile.fullName} is now ${isActive ? 'active' : 'inactive'}.`);
+      setSuccessMessage(
+        isActive
+          ? `Approved & Activated: ${profile.fullName} (${profile.companyName || profile.email}) can now sign in and post jobs!`
+          : `${profile.fullName} has been deactivated.`
+      );
     } catch (err: any) {
       alert(`Could not update customer status: ${err.message || 'Unknown error'}`);
     } finally {
@@ -146,7 +162,12 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            Active Accounts ({allProfiles.length})
+            <span>All Accounts ({allProfiles.length})</span>
+            {pendingCount > 0 && (
+              <span className="bg-amber-500 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-1 animate-pulse">
+                {pendingCount} pending
+              </span>
+            )}
           </button>
         </div>
 
@@ -332,13 +353,36 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
                 <span>{successMessage}</span>
               </div>
             )}
+            {pendingCount > 0 && (
+              <div className="p-3.5 bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-700/80 text-amber-900 dark:text-amber-200 rounded-xl text-xs flex items-center justify-between gap-3 shadow-xs mb-3">
+                <div className="flex items-center gap-2.5">
+                  <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <div>
+                    <span className="font-bold">{pendingCount} Customer Organization{pendingCount > 1 ? 's' : ''} Awaiting Approval</span>
+                    <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                      Review company credentials below and click "Approve" to authorize platform access.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
               Current registered platform users across the database:
             </p>
-            {allProfiles.map((p) => (
+            {[...allProfiles]
+              .sort((a, b) => {
+                if (a.isActive === false && b.isActive !== false) return -1;
+                if (a.isActive !== false && b.isActive === false) return 1;
+                return (a.fullName || '').localeCompare(b.fullName || '');
+              })
+              .map((p) => (
               <div
                 key={p.id}
-                className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/60 flex items-center justify-between text-xs"
+                className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-colors ${
+                  p.isActive === false
+                    ? 'border-amber-300 dark:border-amber-700/80 bg-amber-50/50 dark:bg-amber-950/30 ring-1 ring-amber-400/40'
+                    : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/60'
+                }`}
               >
                 <div>
                   <div className="flex items-center gap-2">

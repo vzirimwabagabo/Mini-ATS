@@ -111,6 +111,9 @@ http://localhost:5173
 
 The initial `schema.sql` is a one-time setup for a new project. For later updates, run one command: `npm run supabase:update`. It applies versioned migrations from `supabase/migrations/` to the linked project and deploys the admin Edge Function; no SQL needs to be pasted into PowerShell.
 
+### Deploying to Cloudflare Pages
+Use `npm run build` as the build command and `dist` as the output directory. If your Cloudflare setup requires a custom deploy command, use `npm run deploy:pages`; do not use `wrangler deploy`, which deploys Workers rather than Pages. Pages handles the single-page-app fallback when there is no `404.html`.
+
 ---
 
 ## 🎥 5-Minute Loom Demo Video Script

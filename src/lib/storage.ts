@@ -429,7 +429,8 @@ export async function saveJob(jobData: Partial<Job> & { customerId: string }): P
         status: jobData.status || 'active'
       };
 
-      if (jobData.id) {
+      const isExistingSupabaseId = Boolean(jobData.id && !jobData.id.startsWith('job-'));
+      if (isExistingSupabaseId) {
         const { data, error } = await supabase
           .from('jobs')
           .update(payload)
@@ -528,7 +529,8 @@ export async function saveCandidate(candidateData: Partial<Candidate> & { custom
         updated_at: now
       };
 
-      if (candidateData.id) {
+      const isExistingSupabaseId = Boolean(candidateData.id && !candidateData.id.startsWith('cand-'));
+      if (isExistingSupabaseId) {
         const { data, error } = await supabase
           .from('candidates')
           .update(payload)

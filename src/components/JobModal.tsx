@@ -87,7 +87,7 @@ export const JobModal: React.FC<JobModalProps> = ({
         .filter(Boolean);
 
       const newJob: Job = {
-        id: jobToEdit?.id || 'job-' + Date.now(),
+        id: jobToEdit?.id || '',
         customerId: jobToEdit?.customerId || targetCustomerId || currentCustomerId,
         title: title.trim(),
         department: department.trim(),

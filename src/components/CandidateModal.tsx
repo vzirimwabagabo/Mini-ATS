@@ -416,7 +416,7 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
         .filter(Boolean);
 
       const candidateBase: Candidate = {
-        id: candidateToEdit?.id || 'cand-' + Date.now(),
+        id: candidateToEdit?.id || '',
         customerId: candidateToEdit?.customerId || selectedJob?.customerId || currentCustomerId,
         jobId,
         name: name.trim(),

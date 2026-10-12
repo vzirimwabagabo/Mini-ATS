@@ -354,10 +354,10 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
                     </span>
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
                           p.isActive === false
-                            ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800'
+                            ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
                             : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
                         }`}>
-                          {p.isActive === false ? 'INACTIVE' : 'ACTIVE'}
+                          {p.isActive === false ? 'PENDING APPROVAL' : 'ACTIVE'}
                         </span>
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex gap-3">
@@ -379,16 +379,22 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
                     type="button"
                     disabled={isSubmitting}
                     onClick={() => handleSetActive(p)}
-                    className={`p-2 rounded-lg disabled:opacity-50 ${p.isActive === false
-                      ? 'text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40'
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50 ${p.isActive === false
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
                       : 'text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40'
                     }`}
-                    title={p.isActive === false ? 'Reactivate customer' : 'Deactivate customer'}
-                    aria-label={`${p.isActive === false ? 'Reactivate' : 'Deactivate'} ${p.fullName}`}
+                    title={p.isActive === false ? 'Approve & Reactivate customer' : 'Deactivate customer'}
+                    aria-label={`${p.isActive === false ? 'Approve' : 'Deactivate'} ${p.fullName}`}
                   >
                     {p.isActive === false
-                      ? <CircleCheck className="w-3.5 h-3.5" />
-                      : <CircleOff className="w-3.5 h-3.5" />}
+                      ? <>
+                          <CircleCheck className="w-3.5 h-3.5" />
+                          <span>Approve</span>
+                        </>
+                      : <>
+                          <CircleOff className="w-3.5 h-3.5" />
+                          <span>Deactivate</span>
+                        </>}
                   </button>
                 )}
               </div>

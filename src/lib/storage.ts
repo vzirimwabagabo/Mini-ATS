@@ -781,7 +781,7 @@ export async function createNewAccount(
       email,
       fullName,
       role: 'customer',
-      isActive: true,
+      isActive: false, // Default to false until administrator approves
       companyName,
       createdAt: now
     };

@@ -125,6 +125,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               .eq('id', data.user.id)
               .single();
             if (profile) {
+              if (profile.is_active === false) {
+                await supabase.auth.signOut();
+                throw new Error('Your account is pending administrator approval. Please wait for an administrator to activate your account.');
+              }
               const u: UserProfile = {
                 id: profile.id,
                 email: profile.email,
@@ -143,7 +147,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           if (data?.user) await supabase.auth.signOut();
           return false;
-        } catch {
+        } catch (err: any) {
+          if (err?.message?.includes('pending administrator approval')) {
+            throw err;
+          }
           return false;
         }
       }

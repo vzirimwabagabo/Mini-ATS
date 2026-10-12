@@ -98,13 +98,14 @@ $$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '';
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, full_name, role, company_name)
+  INSERT INTO public.profiles (id, email, full_name, role, company_name, is_active)
   VALUES (
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data ->> 'full_name', NEW.email, 'New customer'),
     'customer',
-    NULLIF(NEW.raw_user_meta_data ->> 'company_name', '')
+    NULLIF(NEW.raw_user_meta_data ->> 'company_name', ''),
+    FALSE
   )
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;

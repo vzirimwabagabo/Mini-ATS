@@ -21,8 +21,8 @@ function isOriginAllowed(origin: string | null): boolean {
   if (!origin) return true;
   if (allowedOrigins.includes(origin)) return true;
   // Allow all Vercel deployment URLs (*.vercel.app) and Cloudflare Pages (*.pages.dev)
-  if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) return true;
-  if (/^https:\/\/[a-z0-9-]+\.pages\.dev$/i.test(origin)) return true;
+  if (/^https:\/\/([a-z0-9-]+\.)*vercel\.app$/i.test(origin)) return true;
+  if (/^https:\/\/([a-z0-9-]+\.)*pages\.dev$/i.test(origin)) return true;
   return false;
 }
 
@@ -101,14 +101,11 @@ Deno.serve(async (request) => {
       const userId = typeof body.userId === 'string' ? body.userId : '';
       const isActive = body.isActive;
       if (
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId) ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId) ||
         typeof isActive !== 'boolean'
       ) {
         return respond({ error: 'Invalid customer account status request.' }, 400, origin);
       }
-
-      const { data: targetAuth, error: targetAuthError } = await serviceClient.auth.admin.getUserById(userId);
-      if (targetAuthError || !targetAuth.user) return respond({ error: 'Account not found in Supabase Auth.' }, 404, origin);
 
       const { data: targetProfile, error: targetProfileError } = await serviceClient
         .from('profiles')
@@ -144,15 +141,12 @@ Deno.serve(async (request) => {
     if (action === 'update') {
       const userId = typeof body.userId === 'string' ? body.userId : '';
       if (
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId) ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId) ||
         !fullName || fullName.length > 120 || companyName.length > 160 ||
         (role !== 'admin' && role !== 'customer')
       ) {
         return respond({ error: 'Invalid account details.' }, 400, origin);
       }
-
-      const { data: targetAuth, error: targetAuthError } = await serviceClient.auth.admin.getUserById(userId);
-      if (targetAuthError || !targetAuth.user) return respond({ error: 'Account not found in Supabase Auth.' }, 404, origin);
 
       const { data: targetProfile, error: targetProfileError } = await serviceClient
         .from('profiles')
@@ -174,33 +168,36 @@ Deno.serve(async (request) => {
         if ((count ?? 0) <= 1) return respond({ error: 'The last admin account cannot be changed to customer.' }, 409, origin);
       }
 
-      const previousMetadata = targetAuth.user.user_metadata ?? {};
-      const { error: metadataError } = await serviceClient.auth.admin.updateUserById(userId, {
-        user_metadata: {
-          ...previousMetadata,
-          full_name: fullName,
-          company_name: companyName || null,
-        },
-      });
-      if (metadataError) {
-        return respond({ error: 'Could not update Auth user details; the profile was not changed.' }, 500, origin);
+      // If user exists in Supabase Auth, synchronize user_metadata
+      const { data: targetAuth } = await serviceClient.auth.admin.getUserById(userId);
+      let previousMetadata: Record<string, unknown> | null = null;
+      if (targetAuth?.user) {
+        previousMetadata = targetAuth.user.user_metadata ?? {};
+        const { error: metadataError } = await serviceClient.auth.admin.updateUserById(userId, {
+          user_metadata: {
+            ...previousMetadata,
+            full_name: fullName,
+            company_name: companyName || null,
+          },
+        });
+        if (metadataError) {
+          return respond({ error: 'Could not update Auth user details; the profile was not changed.' }, 500, origin);
+        }
       }
 
       const { data: updatedProfile, error: updateError } = await serviceClient
         .from('profiles')
         .update({ role, full_name: fullName, company_name: companyName || null })
         .eq('id', userId)
-        .select('id, email, role, full_name, company_name, created_at')
+        .select('id, email, role, full_name, company_name, is_active, created_at')
         .single();
       if (updateError || !updatedProfile) {
-        const { error: rollbackError } = await serviceClient.auth.admin.updateUserById(userId, {
-          user_metadata: previousMetadata,
-        });
-        return respond({
-          error: rollbackError
-            ? 'Profile update failed; Auth details may not have been restored. Check both records before retrying.'
-            : 'Could not update the account profile. Auth user details were restored.',
-        }, 500, origin);
+        if (previousMetadata) {
+          await serviceClient.auth.admin.updateUserById(userId, {
+            user_metadata: previousMetadata,
+          });
+        }
+        return respond({ error: 'Could not update the account profile.' }, 500, origin);
       }
 
       return respond({
@@ -208,6 +205,7 @@ Deno.serve(async (request) => {
           id: updatedProfile.id,
           email: updatedProfile.email,
           role: updatedProfile.role,
+          isActive: updatedProfile.is_active,
           fullName: updatedProfile.full_name,
           companyName: updatedProfile.company_name,
           createdAt: updatedProfile.created_at,

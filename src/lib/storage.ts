@@ -778,6 +778,12 @@ export async function createNewAccount(
     if (!authData?.user) {
       throw new Error('Cloud account creation failed. No user was returned by Supabase.');
     }
+    if (authData.user.identities && authData.user.identities.length === 0) {
+      throw new Error('An account with this email address already exists. Please sign in or use password reset.');
+    }
+
+    // Always clear session so unapproved customer accounts are not left active in browser
+    await supabase.auth.signOut();
 
     return {
       id: authData.user.id,

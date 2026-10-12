@@ -225,7 +225,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       created = await createNewAccount(email, password, fullName, role, companyName);
     }
-    await refreshProfiles();
+    if (currentUser?.role === 'admin') {
+      await refreshProfiles();
+    }
     return created;
   };
 

@@ -15,7 +15,8 @@ interface CandidateDetailDrawerProps {
   candidate: Candidate | null;
   jobs: Job[];
   onClose: () => void;
-  onUpdateCandidate: (candidate: Candidate) => void;
+  onEditCandidate: (candidate: Candidate) => void;
+  onUpdateCandidate: (candidate: Candidate) => Promise<void> | void;
 }
 
 const STAGES: { id: CandidateStage; label: string }[] = [
@@ -108,27 +109,33 @@ export const CandidateDetailDrawer: React.FC<CandidateDetailDrawerProps> = ({
   candidate,
   jobs,
   onClose,
+  onEditCandidate,
   onUpdateCandidate,
 }) => {
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [notes, setNotes] = useState('');
+  const [isSavedNotes, setIsSavedNotes] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [activeTab, setActiveTab] = useState<'ai' | 'resume' | 'outreach'>('ai');
+
   if (!candidate) return null;
 
   const currentJob = jobs.find((j) => j.id === candidate.jobId);
   const linkedinUrl = safeExternalUrl(candidate.linkedinUrl);
   const portfolioUrl = safeExternalUrl(candidate.portfolioUrl);
-  const [isEvaluating, setIsEvaluating] = useState(false);
-  const [notes, setNotes] = useState(candidate.notes || '');
-  const [isSavedNotes, setIsSavedNotes] = useState(false);
-  const [copiedEmail, setCopiedEmail] = useState(false);
-  const [activeTab, setActiveTab] = useState<'ai' | 'resume' | 'outreach'>('ai');
 
   const ai = candidate.aiEvaluation;
   const tier = ai?.tier;
   const tierConfig = tier ? TIER_CONFIG[tier] : null;
-  const handleStageSelect = (stage: CandidateStage) => {
+  const handleStageSelect = async (stage: CandidateStage) => {
     if (stage === 'hired') {
       confetti({ particleCount: 90, spread: 75, origin: { y: 0.6 } });
     }
-    onUpdateCandidate({ ...candidate, stage });
+    try {
+      await onUpdateCandidate({ ...candidate, stage });
+    } catch (err) {
+      alert(`Could not update candidate stage: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
   };
 
   const handleRunAiEvaluation = async () => {
@@ -136,18 +143,22 @@ export const CandidateDetailDrawer: React.FC<CandidateDetailDrawerProps> = ({
     setIsEvaluating(true);
     try {
       const evaluation = await evaluateCandidateCV(candidate, currentJob);
-      onUpdateCandidate({ ...candidate, aiEvaluation: evaluation });
+      await onUpdateCandidate({ ...candidate, aiEvaluation: evaluation });
     } catch (err) {
-      console.error('AI evaluation failed', err);
+      alert(`Could not save the assessment: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsEvaluating(false);
     }
   };
 
-  const handleSaveNotes = () => {
-    onUpdateCandidate({ ...candidate, notes });
-    setIsSavedNotes(true);
-    setTimeout(() => setIsSavedNotes(false), 2000);
+  const handleSaveNotes = async () => {
+    try {
+      await onUpdateCandidate({ ...candidate, notes });
+      setIsSavedNotes(true);
+      setTimeout(() => setIsSavedNotes(false), 2000);
+    } catch (err) {
+      alert(`Could not save notes: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
   };
 
   const handleCopyOutreach = () => {
@@ -208,13 +219,25 @@ export const CandidateDetailDrawer: React.FC<CandidateDetailDrawerProps> = ({
               {currentJob ? currentJob.title : 'General Talent Pool'}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-full transition-colors shrink-0"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => onEditCandidate(candidate)}
+              className="p-2 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-lg transition-colors shrink-0"
+              title="Edit candidate profile"
+              aria-label="Edit candidate profile"
+            >
+              <FileText className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-full transition-colors shrink-0"
+              aria-label="Close candidate details"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* ── Pipeline Stage Changer ── */}

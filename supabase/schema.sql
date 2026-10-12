@@ -32,8 +32,12 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     full_name TEXT NOT NULL,
     role user_role NOT NULL DEFAULT 'customer',
     company_name TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE;
 
 -- 3. Jobs Table
 CREATE TABLE IF NOT EXISTS public.jobs (
@@ -79,7 +83,15 @@ CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE id = (SELECT auth.uid()) AND role = 'admin'
+    WHERE id = (SELECT auth.uid()) AND role = 'admin' AND is_active
+  );
+$$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '';
+
+CREATE OR REPLACE FUNCTION public.is_active_user()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = (SELECT auth.uid()) AND is_active
   );
 $$ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '';
 
@@ -113,20 +125,20 @@ DROP POLICY IF EXISTS "Candidates public policy" ON public.candidates;
 DROP POLICY IF EXISTS "Profiles select own or admin" ON public.profiles;
 CREATE POLICY "Profiles select own or admin" ON public.profiles
   FOR SELECT TO authenticated
-  USING (id = (SELECT auth.uid()) OR public.is_admin());
+  USING ((id = (SELECT auth.uid()) AND is_active) OR public.is_admin());
 
 DROP POLICY IF EXISTS "Jobs tenant access" ON public.jobs;
 CREATE POLICY "Jobs tenant access" ON public.jobs
   FOR ALL TO authenticated
-  USING (customer_id = (SELECT auth.uid()) OR public.is_admin())
-  WITH CHECK (customer_id = (SELECT auth.uid()) OR public.is_admin());
+  USING ((customer_id = (SELECT auth.uid()) AND public.is_active_user()) OR public.is_admin())
+  WITH CHECK ((customer_id = (SELECT auth.uid()) AND public.is_active_user()) OR public.is_admin());
 
 DROP POLICY IF EXISTS "Candidates tenant access" ON public.candidates;
 CREATE POLICY "Candidates tenant access" ON public.candidates
   FOR ALL TO authenticated
-  USING (customer_id = (SELECT auth.uid()) OR public.is_admin())
+  USING ((customer_id = (SELECT auth.uid()) AND public.is_active_user()) OR public.is_admin())
   WITH CHECK (
-    (customer_id = (SELECT auth.uid()) OR public.is_admin())
+    ((customer_id = (SELECT auth.uid()) AND public.is_active_user()) OR public.is_admin())
     AND EXISTS (
       SELECT 1 FROM public.jobs
       WHERE jobs.id = candidates.job_id

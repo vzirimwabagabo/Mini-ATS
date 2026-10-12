@@ -15,7 +15,7 @@ interface CandidateModalProps {
   onClose: () => void;
   jobs: Job[];
   currentCustomerId: string;
-  onCandidateSaved: (candidate: Candidate) => void;
+  onCandidateSaved: (candidate: Candidate) => Promise<void> | void;
   candidateToEdit?: Candidate | null;
   defaultStage?: CandidateStage;
 }
@@ -349,9 +349,10 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
   candidateToEdit,
   defaultStage = 'sourced',
 }) => {
-  if (!isOpen) return null;
-
   const defaultJobId = candidateToEdit?.jobId || (jobs.length > 0 ? jobs[0].id : '');
+  const availableJobs = candidateToEdit
+    ? jobs.filter((job) => job.customerId === candidateToEdit.customerId)
+    : jobs;
 
   const [name, setName] = useState(candidateToEdit?.name || '');
   const [email, setEmail] = useState(candidateToEdit?.email || '');
@@ -412,7 +413,7 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
 
       const candidateBase: Candidate = {
         id: candidateToEdit?.id || 'cand-' + Date.now(),
-        customerId: candidateToEdit?.customerId || currentCustomerId,
+        customerId: candidateToEdit?.customerId || selectedJob?.customerId || currentCustomerId,
         jobId,
         name: name.trim(),
         email: email.trim(),
@@ -432,14 +433,16 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
         candidateBase.aiEvaluation = evaluation;
       }
 
-      onCandidateSaved(candidateBase);
+      await onCandidateSaved(candidateBase);
       onClose();
     } catch (err) {
-      console.error('Error saving candidate', err);
+      alert(`Could not save candidate: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
@@ -515,7 +518,7 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
                 onChange={(e) => setJobId(e.target.value)}
                 className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
               >
-                {jobs.map((j) => (
+                {availableJobs.map((j) => (
                   <option key={j.id} value={j.id}>
                     {j.title} ({j.department})
                   </option>

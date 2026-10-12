@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UserProfile, UserRole } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { X, UserPlus, Shield, Building, Users, CheckCircle, Mail, Key, Pencil, Save } from 'lucide-react';
+import { X, UserPlus, Shield, Building, Users, CheckCircle, Mail, Key, Pencil, Save, CircleOff, CircleCheck, Eye, EyeOff } from 'lucide-react';
 
 interface AdminAccountModalProps {
   isOpen: boolean;
@@ -9,7 +9,7 @@ interface AdminAccountModalProps {
 }
 
 export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, onClose }) => {
-  const { allProfiles, createAccount, updateAccount, isSupabaseConfigured } = useAuth();
+  const { allProfiles, createAccount, updateAccount, setAccountActive, isSupabaseConfigured } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
@@ -17,6 +17,7 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -29,6 +30,7 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
     setFullName('');
     setEmail('');
     setPassword('');
+    setShowPassword(false);
     setCompanyName('');
   };
 
@@ -41,6 +43,22 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
     setPassword('');
     setSuccessMessage('');
     setActiveTab('create');
+  };
+
+  const handleSetActive = async (profile: UserProfile) => {
+    const isActive = profile.isActive === false;
+    if (!isActive && !confirm(`Deactivate ${profile.fullName}? They will lose access, but their jobs and candidates will be kept.`)) return;
+
+    setIsSubmitting(true);
+    setSuccessMessage('');
+    try {
+      await setAccountActive(profile.id, isActive);
+      setSuccessMessage(`${profile.fullName} is now ${isActive ? 'active' : 'inactive'}.`);
+    } catch (err: any) {
+      alert(`Could not update customer status: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -260,14 +278,24 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
                 <div className="relative">
                   <Key className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
                   <input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     required
                     minLength={isSupabaseConfigured ? 12 : undefined}
                     maxLength={128}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full text-xs pl-8 pr-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 font-mono transition-colors"
+                    className="w-full text-xs pl-8 pr-10 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 font-mono transition-colors"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((visible) => !visible)}
+                    aria-label={showPassword ? 'Hide initial password' : 'Show initial password'}
+                    aria-pressed={showPassword}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/40 rounded"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
             </div>
@@ -324,6 +352,13 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
                     >
                       {p.role.toUpperCase()}
                     </span>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                          p.isActive === false
+                            ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800'
+                            : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                        }`}>
+                          {p.isActive === false ? 'INACTIVE' : 'ACTIVE'}
+                        </span>
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex gap-3">
                     <span>{p.email}</span>
@@ -339,6 +374,23 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
                 >
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
+                {p.role === 'customer' && (
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={() => handleSetActive(p)}
+                    className={`p-2 rounded-lg disabled:opacity-50 ${p.isActive === false
+                      ? 'text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/40'
+                      : 'text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40'
+                    }`}
+                    title={p.isActive === false ? 'Reactivate customer' : 'Deactivate customer'}
+                    aria-label={`${p.isActive === false ? 'Reactivate' : 'Deactivate'} ${p.fullName}`}
+                  >
+                    {p.isActive === false
+                      ? <CircleCheck className="w-3.5 h-3.5" />
+                      : <CircleOff className="w-3.5 h-3.5" />}
+                  </button>
+                )}
               </div>
             ))}
           </div>

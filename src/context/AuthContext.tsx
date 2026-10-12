@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, UserRole } from '../types';
-import { createAccountAsAdmin, createNewAccount, fetchAllProfiles, getStoredProfiles, initLocalStorageIfEmpty, updateAccountAsAdmin } from '../lib/storage';
+import { createAccountAsAdmin, createNewAccount, fetchAllProfiles, getStoredProfiles, initLocalStorageIfEmpty, setAccountActiveAsAdmin, updateAccountAsAdmin } from '../lib/storage';
 import { getSupabaseClient, getSupabaseConfig } from '../lib/supabase';
 
 interface AuthContextType {
@@ -15,6 +15,7 @@ interface AuthContextType {
   setImpersonatedCustomer: (customer: UserProfile | null) => void;
   createAccount: (email: string, password: string, fullName: string, role: UserRole, companyName?: string) => Promise<UserProfile>;
   updateAccount: (userId: string, fullName: string, role: UserRole, companyName?: string) => Promise<UserProfile>;
+  setAccountActive: (userId: string, isActive: boolean) => Promise<UserProfile>;
   refreshProfiles: () => Promise<void>;
   switchUserRoleDemo: (role: UserRole) => void;
 }
@@ -76,6 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 id: profile.id,
                 email: profile.email,
                 role: profile.role,
+                isActive: profile.is_active ?? true,
                 fullName: profile.full_name,
                 companyName: profile.company_name,
                 createdAt: profile.created_at
@@ -125,6 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 id: profile.id,
                 email: profile.email,
                 role: profile.role,
+                isActive: profile.is_active ?? true,
                 fullName: profile.full_name,
                 companyName: profile.company_name,
                 createdAt: profile.created_at
@@ -232,6 +235,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return updated;
   };
 
+  const setAccountActive = async (userId: string, isActive: boolean): Promise<UserProfile> => {
+    if (currentUser?.role !== 'admin') throw new Error('Only an admin can change account status.');
+
+    const updated = await setAccountActiveAsAdmin(userId, isActive);
+    await refreshProfiles();
+    return updated;
+  };
+
   const switchUserRoleDemo = (role: UserRole) => {
     if (!import.meta.env.DEV || getSupabaseConfig().isConfigured) return;
     const profiles = getStoredProfiles();
@@ -261,6 +272,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setImpersonatedCustomer,
         createAccount,
         updateAccount,
+        setAccountActive,
         refreshProfiles,
         switchUserRoleDemo
       }}

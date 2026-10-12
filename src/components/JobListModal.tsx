@@ -1,6 +1,6 @@
 import React from 'react';
 import { Candidate, Job } from '../types';
-import { X, Briefcase, Plus, Trash2, MapPin, DollarSign, Users } from 'lucide-react';
+import { X, Briefcase, Plus, Trash2, MapPin, DollarSign, Users, Pencil } from 'lucide-react';
 
 interface JobListModalProps {
   isOpen: boolean;
@@ -8,6 +8,7 @@ interface JobListModalProps {
   jobs: Job[];
   candidates: Candidate[];
   onOpenNewJob: () => void;
+  onEditJob: (job: Job) => void;
   onDeleteJob: (jobId: string) => void;
 }
 
@@ -17,6 +18,7 @@ export const JobListModal: React.FC<JobListModalProps> = ({
   jobs,
   candidates,
   onOpenNewJob,
+  onEditJob,
   onDeleteJob,
 }) => {
   if (!isOpen) return null;
@@ -123,6 +125,15 @@ export const JobListModal: React.FC<JobListModalProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => onEditJob(job)}
+                        className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition-colors"
+                        title={`Edit ${job.title}`}
+                        aria-label={`Edit ${job.title}`}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
                       <button
                         type="button"
                         onClick={() => {

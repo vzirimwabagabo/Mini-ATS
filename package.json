@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test:security": "node --test tests/security.test.mjs",
+    "supabase:update": "supabase db push --linked --yes && supabase functions deploy admin-create-account",
     "preview": "vite preview"
   },
   "dependencies": {

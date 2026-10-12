@@ -95,7 +95,7 @@ http://localhost:5173
 
 ### Connecting to your Supabase Project
 1. Create a project at [Supabase.com](https://supabase.com).
-2. Go to the **SQL Editor** in your Supabase dashboard and run the script in `supabase/schema.sql`.
+2. Go to the **SQL Editor** in your Supabase dashboard and run the base schema in `supabase/schema.sql` once.
 3. Copy your project URL and public anon key into `.env` (see `.env.example`). The anon key is public; database authorization must be enforced by RLS. Never put a service-role key in the client app.
 4. Create the first admin as a trusted operator: create the user in Supabase Auth, then promote only that verified user's matching profile through the Supabase SQL Editor or Table Editor. For example, after replacing the email with the intended admin address:
     ```sql
@@ -106,7 +106,10 @@ http://localhost:5173
        AND lower(u.email) = lower('admin@your-company.example');
     ```
     Do not grant admin based on client-provided signup metadata.
-5. Link the Supabase CLI to the project and deploy `supabase functions deploy admin-create-account`. Set the `ALLOWED_ORIGINS` function secret to the exact app origins (for example, local development and the production HTTPS origin). Verify `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` are available in the Edge Function environment. The service-role key must never be placed in a `VITE_` variable or frontend configuration.
+5. Link the Supabase CLI to the project once with `npx supabase login` and `npx supabase link --project-ref YOUR_PROJECT_REF`.
+6. Set the `ALLOWED_ORIGINS` function secret to the exact production app origin before hosting. Supabase provides server-side function credentials; never put a service-role key in a `VITE_` variable or frontend configuration.
+
+The initial `schema.sql` is a one-time setup for a new project. For later updates, run one command: `npm run supabase:update`. It applies versioned migrations from `supabase/migrations/` to the linked project and deploys the admin Edge Function; no SQL needs to be pasted into PowerShell.
 
 ---
 

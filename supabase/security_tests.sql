@@ -21,6 +21,10 @@ VALUES (
   'RLS test candidate', 'rls-test@example.invalid', 'Temporary isolation fixture'
 );
 
+UPDATE public.profiles
+SET is_active = FALSE
+WHERE id = 'a0000000-0000-0000-0000-000000000003';
+
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000002', true);
 
@@ -61,6 +65,21 @@ BEGIN
 END;
 $$;
 
+SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000003', true);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid()) THEN
+    RAISE EXCEPTION 'Inactive customer can read their profile';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.jobs WHERE customer_id = auth.uid()) THEN
+    RAISE EXCEPTION 'Inactive customer can read tenant jobs';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.candidates WHERE customer_id = auth.uid()) THEN
+    RAISE EXCEPTION 'Inactive customer can read tenant candidates';
+  END IF;
+END;
+$$;
+
 SELECT set_config('request.jwt.claim.sub', 'a0000000-0000-0000-0000-000000000001', true);
 DO $$
 BEGIN
@@ -69,6 +88,9 @@ BEGIN
   END IF;
   IF NOT public.is_admin() THEN
     RAISE EXCEPTION 'Admin role was not recognized';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.profiles WHERE id = 'a0000000-0000-0000-0000-000000000003' AND NOT is_active) THEN
+    RAISE EXCEPTION 'Admin cannot inspect inactive customer accounts';
   END IF;
 END;
 $$;

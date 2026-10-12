@@ -14,6 +14,7 @@ export interface UserProfile {
   id: string;
   email: string;
   role: UserRole;
+  isActive?: boolean;
   fullName: string;
   companyName?: string;
   createdAt: string;

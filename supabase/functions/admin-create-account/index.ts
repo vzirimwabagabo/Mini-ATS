@@ -65,10 +65,10 @@ Deno.serve(async (request) => {
     });
     const { data: profile, error: profileError } = await serviceClient
       .from('profiles')
-      .select('role')
+      .select('role, is_active')
       .eq('id', userData.user.id)
       .single();
-    if (profileError || profile?.role !== 'admin') {
+    if (profileError || profile?.role !== 'admin' || !profile.is_active) {
       return respond({ error: 'Administrator access required.' }, 403, origin);
     }
 
@@ -88,6 +88,50 @@ Deno.serve(async (request) => {
     const companyName = typeof body.companyName === 'string' ? body.companyName.trim() : '';
     const role = body.role;
 
+    if (action === 'set-active') {
+      const userId = typeof body.userId === 'string' ? body.userId : '';
+      const isActive = body.isActive;
+      if (
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId) ||
+        typeof isActive !== 'boolean'
+      ) {
+        return respond({ error: 'Invalid customer account status request.' }, 400, origin);
+      }
+
+      const { data: targetAuth, error: targetAuthError } = await serviceClient.auth.admin.getUserById(userId);
+      if (targetAuthError || !targetAuth.user) return respond({ error: 'Account not found in Supabase Auth.' }, 404, origin);
+
+      const { data: targetProfile, error: targetProfileError } = await serviceClient
+        .from('profiles')
+        .select('id, email, role')
+        .eq('id', userId)
+        .single();
+      if (targetProfileError || !targetProfile) return respond({ error: 'Account profile not found.' }, 404, origin);
+      if (targetProfile.role !== 'customer') {
+        return respond({ error: 'Only customer accounts can be deactivated from this screen.' }, 409, origin);
+      }
+
+      const { data: updatedProfile, error: updateError } = await serviceClient
+        .from('profiles')
+        .update({ is_active: isActive })
+        .eq('id', userId)
+        .select('id, email, role, full_name, company_name, is_active, created_at')
+        .single();
+      if (updateError || !updatedProfile) return respond({ error: 'Could not update the customer account status.' }, 500, origin);
+
+      return respond({
+        profile: {
+          id: updatedProfile.id,
+          email: updatedProfile.email,
+          role: updatedProfile.role,
+          isActive: updatedProfile.is_active,
+          fullName: updatedProfile.full_name,
+          companyName: updatedProfile.company_name,
+          createdAt: updatedProfile.created_at,
+        },
+      }, 200, origin);
+    }
+
     if (action === 'update') {
       const userId = typeof body.userId === 'string' ? body.userId : '';
       if (
@@ -103,7 +147,7 @@ Deno.serve(async (request) => {
 
       const { data: targetProfile, error: targetProfileError } = await serviceClient
         .from('profiles')
-        .select('id, email, role')
+        .select('id, email, role, is_active')
         .eq('id', userId)
         .single();
       if (targetProfileError || !targetProfile) return respond({ error: 'Account profile not found.' }, 404, origin);

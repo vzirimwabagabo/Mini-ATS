@@ -287,7 +287,8 @@ export const areTablesMissingInSupabase = () => tablesMissingInSupabase;
 
 export async function fetchAllProfiles(): Promise<UserProfile[]> {
   const supabase = getSupabaseClient();
-  if (supabase && !tablesMissingInSupabase) {
+  if (supabase) {
+    if (tablesMissingInSupabase) throw new Error('Supabase tables are unavailable; local demo data is disabled in cloud mode.');
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -296,20 +297,21 @@ export async function fetchAllProfiles(): Promise<UserProfile[]> {
       if (error) {
         if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
           tablesMissingInSupabase = true;
-          console.info('Supabase project connected, but schema tables are not yet created. Using local demo data.');
         }
-      } else if (data && data.length > 0) {
+        throw new Error('Could not load profiles from Supabase.');
+      } else if (data) {
         return data.map((d: any) => ({
           id: d.id,
           email: d.email,
           role: d.role,
+          isActive: d.is_active ?? true,
           fullName: d.full_name,
           companyName: d.company_name,
           createdAt: d.created_at
         }));
       }
-    } catch (e) {
-      console.warn('Supabase fetchAllProfiles failed, fallback to local', e);
+    } catch {
+      throw new Error('Could not load profiles from Supabase.');
     }
   }
   return getStoredProfiles();
@@ -317,7 +319,8 @@ export async function fetchAllProfiles(): Promise<UserProfile[]> {
 
 export async function fetchJobs(customerId?: string): Promise<Job[]> {
   const supabase = getSupabaseClient();
-  if (supabase && !tablesMissingInSupabase) {
+  if (supabase) {
+    if (tablesMissingInSupabase) throw new Error('Supabase tables are unavailable; local demo data is disabled in cloud mode.');
     try {
       let query = supabase.from('jobs').select('*').order('created_at', { ascending: false });
       if (customerId && customerId !== 'all') {
@@ -328,6 +331,7 @@ export async function fetchJobs(customerId?: string): Promise<Job[]> {
         if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
           tablesMissingInSupabase = true;
         }
+        throw new Error('Could not load jobs from Supabase.');
       } else if (data) {
         return data.map((d: any) => ({
           id: d.id,
@@ -343,8 +347,8 @@ export async function fetchJobs(customerId?: string): Promise<Job[]> {
           createdAt: d.created_at
         }));
       }
-    } catch (e) {
-      console.warn('Supabase fetchJobs failed, fallback to local', e);
+    } catch {
+      throw new Error('Could not load jobs from Supabase.');
     }
   }
 
@@ -357,7 +361,8 @@ export async function fetchJobs(customerId?: string): Promise<Job[]> {
 
 export async function fetchCandidates(customerId?: string, jobId?: string): Promise<Candidate[]> {
   const supabase = getSupabaseClient();
-  if (supabase && !tablesMissingInSupabase) {
+  if (supabase) {
+    if (tablesMissingInSupabase) throw new Error('Supabase tables are unavailable; local demo data is disabled in cloud mode.');
     try {
       let query = supabase.from('candidates').select('*').order('created_at', { ascending: false });
       if (customerId && customerId !== 'all') {
@@ -371,6 +376,7 @@ export async function fetchCandidates(customerId?: string, jobId?: string): Prom
         if (error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
           tablesMissingInSupabase = true;
         }
+        throw new Error('Could not load candidates from Supabase.');
       } else if (data) {
         return data.map((d: any) => ({
           id: d.id,
@@ -390,8 +396,8 @@ export async function fetchCandidates(customerId?: string, jobId?: string): Prom
           updatedAt: d.updated_at
         }));
       }
-    } catch (e) {
-      console.warn('Supabase fetchCandidates failed, fallback to local', e);
+    } catch {
+      throw new Error('Could not load candidates from Supabase.');
     }
   }
 
@@ -430,8 +436,8 @@ export async function saveJob(jobData: Partial<Job> & { customerId: string }): P
           .eq('id', jobData.id)
           .select()
           .single();
-        if (!error && data) {
-          return {
+        if (error || !data) throw new Error('Supabase did not save the job.');
+        return {
             id: data.id,
             customerId: data.customer_id,
             title: data.title,
@@ -444,15 +450,14 @@ export async function saveJob(jobData: Partial<Job> & { customerId: string }): P
             status: data.status,
             createdAt: data.created_at
           };
-        }
       } else {
         const { data, error } = await supabase
           .from('jobs')
           .insert(payload)
           .select()
           .single();
-        if (!error && data) {
-          return {
+        if (error || !data) throw new Error('Supabase did not save the job.');
+        return {
             id: data.id,
             customerId: data.customer_id,
             title: data.title,
@@ -465,10 +470,9 @@ export async function saveJob(jobData: Partial<Job> & { customerId: string }): P
             status: data.status,
             createdAt: data.created_at
           };
-        }
       }
-    } catch (e) {
-      console.warn('Supabase saveJob failed, fallback to local', e);
+    } catch {
+      throw new Error('Could not save the job to Supabase.');
     }
   }
 
@@ -531,8 +535,8 @@ export async function saveCandidate(candidateData: Partial<Candidate> & { custom
           .eq('id', candidateData.id)
           .select()
           .single();
-        if (!error && data) {
-          return {
+        if (error || !data) throw new Error('Supabase did not save the candidate.');
+        return {
             id: data.id,
             customerId: data.customer_id,
             jobId: data.job_id,
@@ -549,15 +553,14 @@ export async function saveCandidate(candidateData: Partial<Candidate> & { custom
             createdAt: data.created_at,
             updatedAt: data.updated_at
           };
-        }
       } else {
         const { data, error } = await supabase
           .from('candidates')
           .insert(payload)
           .select()
           .single();
-        if (!error && data) {
-          return {
+        if (error || !data) throw new Error('Supabase did not save the candidate.');
+        return {
             id: data.id,
             customerId: data.customer_id,
             jobId: data.job_id,
@@ -574,10 +577,9 @@ export async function saveCandidate(candidateData: Partial<Candidate> & { custom
             createdAt: data.created_at,
             updatedAt: data.updated_at
           };
-        }
       }
-    } catch (e) {
-      console.warn('Supabase saveCandidate failed, fallback to local', e);
+    } catch {
+      throw new Error('Could not save the candidate to Supabase.');
     }
   }
 
@@ -620,14 +622,12 @@ export async function updateCandidateStage(candidateId: string, stage: Candidate
   const now = new Date().toISOString();
 
   if (supabase) {
-    try {
-      await supabase
-        .from('candidates')
-        .update({ stage, updated_at: now })
-        .eq('id', candidateId);
-    } catch (e) {
-      console.warn('Supabase updateCandidateStage failed', e);
-    }
+    const { error } = await supabase
+      .from('candidates')
+      .update({ stage, updated_at: now })
+      .eq('id', candidateId);
+    if (error) throw new Error('Could not update the candidate stage in Supabase.');
+    return;
   }
 
   const candidates = getStoredCandidates();
@@ -642,11 +642,9 @@ export async function updateCandidateStage(candidateId: string, stage: Candidate
 export async function deleteCandidate(candidateId: string): Promise<void> {
   const supabase = getSupabaseClient();
   if (supabase) {
-    try {
-      await supabase.from('candidates').delete().eq('id', candidateId);
-    } catch (e) {
-      console.warn('Supabase deleteCandidate failed', e);
-    }
+    const { error } = await supabase.from('candidates').delete().eq('id', candidateId);
+    if (error) throw new Error('Could not delete the candidate from Supabase.');
+    return;
   }
 
   const candidates = getStoredCandidates().filter(c => c.id !== candidateId);
@@ -656,11 +654,9 @@ export async function deleteCandidate(candidateId: string): Promise<void> {
 export async function deleteJob(jobId: string): Promise<void> {
   const supabase = getSupabaseClient();
   if (supabase) {
-    try {
-      await supabase.from('jobs').delete().eq('id', jobId);
-    } catch (e) {
-      console.warn('Supabase deleteJob failed', e);
-    }
+    const { error } = await supabase.from('jobs').delete().eq('id', jobId);
+    if (error) throw new Error('Could not delete the job from Supabase.');
+    return;
   }
 
   const jobs = getStoredJobs().filter(j => j.id !== jobId);
@@ -728,6 +724,30 @@ export async function updateAccountAsAdmin(
   return profiles[index];
 }
 
+export async function setAccountActiveAsAdmin(userId: string, isActive: boolean): Promise<UserProfile> {
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.functions.invoke('admin-create-account', {
+      body: { action: 'set-active', userId, isActive }
+    });
+
+    if (error) throw new Error(await getFunctionErrorMessage(error));
+    if (!data?.profile) throw new Error('The Edge Function returned no updated account status.');
+    return data.profile as UserProfile;
+  }
+
+  if (!import.meta.env.DEV) throw new Error('Configure Supabase before editing accounts.');
+
+  const profiles = getStoredProfiles();
+  const index = profiles.findIndex((profile) => profile.id === userId);
+  if (index === -1) throw new Error('Account not found.');
+  if (profiles[index].role !== 'customer') throw new Error('Only customer accounts can be deactivated.');
+
+  profiles[index] = { ...profiles[index], isActive };
+  localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(profiles));
+  return profiles[index];
+}
+
 export async function createNewAccount(
   email: string,
   _password: string,
@@ -759,6 +779,7 @@ export async function createNewAccount(
       email,
       fullName,
       role: 'customer',
+      isActive: true,
       companyName,
       createdAt: now
     };

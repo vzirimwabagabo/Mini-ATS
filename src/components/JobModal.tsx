@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Job, UserProfile } from '../types';
-import { X, Briefcase, Plus, Sparkles } from 'lucide-react';
+import { X, Briefcase, Plus, Sparkles, Save } from 'lucide-react';
 
 interface JobModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onJobSaved: (job: Job) => void;
+  onJobSaved: (job: Job) => Promise<void> | void;
   currentCustomerId: string;
   isAdmin: boolean;
   allProfiles: UserProfile[];
+  jobToEdit?: Job | null;
 }
 
 const SAMPLE_JOB_TEMPLATES = [
@@ -47,20 +48,21 @@ export const JobModal: React.FC<JobModalProps> = ({
   onJobSaved,
   currentCustomerId,
   isAdmin,
-  allProfiles
+  allProfiles,
+  jobToEdit
 }) => {
-  if (!isOpen) return null;
+  const customerProfiles = allProfiles.filter((p) => p.role === 'customer' && p.isActive !== false);
 
-  const customerProfiles = allProfiles.filter((p) => p.role === 'customer');
-
-  const [targetCustomerId, setTargetCustomerId] = useState(currentCustomerId);
-  const [title, setTitle] = useState('');
-  const [department, setDepartment] = useState('Engineering');
-  const [location, setLocation] = useState('Remote');
-  const [type, setType] = useState<Job['type']>('Full-time');
-  const [salaryRange, setSalaryRange] = useState('');
-  const [description, setDescription] = useState('');
-  const [requirementsInput, setRequirementsInput] = useState('');
+  const [targetCustomerId, setTargetCustomerId] = useState(
+    jobToEdit?.customerId || (isAdmin ? customerProfiles[0]?.id : undefined) || currentCustomerId
+  );
+  const [title, setTitle] = useState(jobToEdit?.title || '');
+  const [department, setDepartment] = useState(jobToEdit?.department || 'Engineering');
+  const [location, setLocation] = useState(jobToEdit?.location || 'Remote');
+  const [type, setType] = useState<Job['type']>(jobToEdit?.type || 'Full-time');
+  const [salaryRange, setSalaryRange] = useState(jobToEdit?.salaryRange || '');
+  const [description, setDescription] = useState(jobToEdit?.description || '');
+  const [requirementsInput, setRequirementsInput] = useState(jobToEdit?.requirements.join(', ') || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const applyTemplate = (tmpl: typeof SAMPLE_JOB_TEMPLATES[0]) => {
@@ -73,7 +75,7 @@ export const JobModal: React.FC<JobModalProps> = ({
     setDescription(tmpl.description);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) return;
 
@@ -85,8 +87,8 @@ export const JobModal: React.FC<JobModalProps> = ({
         .filter(Boolean);
 
       const newJob: Job = {
-        id: 'job-' + Date.now(),
-        customerId: targetCustomerId || currentCustomerId,
+        id: jobToEdit?.id || 'job-' + Date.now(),
+        customerId: jobToEdit?.customerId || targetCustomerId || currentCustomerId,
         title: title.trim(),
         department: department.trim(),
         location: location.trim(),
@@ -94,18 +96,20 @@ export const JobModal: React.FC<JobModalProps> = ({
         salaryRange: salaryRange.trim() || undefined,
         description: description.trim(),
         requirements,
-        status: 'active',
-        createdAt: new Date().toISOString()
+        status: jobToEdit?.status || 'active',
+        createdAt: jobToEdit?.createdAt || new Date().toISOString()
       };
 
-      onJobSaved(newJob);
+      await onJobSaved(newJob);
       onClose();
     } catch (err) {
-      console.error('Error saving job', err);
+      alert(`Could not save job: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
@@ -119,7 +123,7 @@ export const JobModal: React.FC<JobModalProps> = ({
               <Briefcase className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Post a New Job Opening</h2>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">{jobToEdit ? 'Edit Job Opening' : 'Post a New Job Opening'}</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Define title, requirements, and job description
               </p>
@@ -136,7 +140,7 @@ export const JobModal: React.FC<JobModalProps> = ({
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
           {/* Quick template loader */}
-          <div className="bg-indigo-50/60 dark:bg-indigo-950/40 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/60 flex flex-wrap items-center justify-between gap-2">
+          {!jobToEdit && <div className="bg-indigo-50/60 dark:bg-indigo-950/40 p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/60 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-900 dark:text-indigo-300">
               <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>Quick Templates:</span>
@@ -153,10 +157,10 @@ export const JobModal: React.FC<JobModalProps> = ({
                 </button>
               ))}
             </div>
-          </div>
+          </div>}
 
           {/* Admin Assign Customer */}
-          {isAdmin && customerProfiles.length > 0 && (
+          {isAdmin && !jobToEdit && customerProfiles.length > 0 && (
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Posting on Behalf of Customer:
@@ -296,8 +300,8 @@ export const JobModal: React.FC<JobModalProps> = ({
               disabled={isSubmitting}
               className="text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
             >
-              <Plus className="w-3.5 h-3.5" />
-              {isSubmitting ? 'Posting...' : 'Publish Job'}
+              {jobToEdit ? <Save className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+              {isSubmitting ? 'Saving...' : jobToEdit ? 'Save Changes' : 'Publish Job'}
             </button>
           </div>
         </form>

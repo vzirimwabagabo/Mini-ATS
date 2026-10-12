@@ -19,13 +19,13 @@
 
 /* Base Theme Overrides to guarantee immediate visual theme transition */
 html.theme-light, body.theme-light {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
+  background-color: #ffffff !important;
+  color: #111111 !important;
 }
 
 html.dark, body.dark {
-  background-color: #090d16 !important;
-  color: #f8fafc !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
 }
 
 html.theme-midnight, body.theme-midnight {
@@ -46,23 +46,23 @@ html.theme-midnight, body.theme-midnight {
 }
 
 .theme-dark header,
-.theme-dark div[class*="bg-white"] {
-  background-color: #0f172a !important;
-  border-color: #1e293b !important;
+.theme-dark [class*="bg-white"] {
+  background-color: #111111 !important;
+  border-color: #333333 !important;
 }
 
 /* Form input, textarea, and select theme consistency */
 .dark input:not([type="checkbox"]):not([type="radio"]),
 .dark textarea {
-  background-color: #1e293b;
-  color: #f8fafc;
-  border-color: #334155;
+  background-color: #111111;
+  color: #ffffff;
+  border-color: #444444;
 }
 
 .dark select {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
-  border-color: #334155;
+  background-color: #111111 !important;
+  color: #ffffff !important;
+  border-color: #444444;
 }
 
 .theme-midnight input:not([type="checkbox"]):not([type="radio"]),
@@ -86,8 +86,8 @@ select option {
 
 .dark select option,
 .theme-dark select option {
-  background-color: #0f172a !important;
-  color: #f8fafc !important;
+  background-color: #111111 !important;
+  color: #ffffff !important;
 }
 
 .theme-midnight select option {
@@ -100,7 +100,7 @@ select option {
 .dark textarea::placeholder,
 .theme-midnight input::placeholder,
 .theme-midnight textarea::placeholder {
-  color: #94a3b8;
+  color: #a3a3a3;
 }
 
 /* Scrollbars */
@@ -116,5 +116,166 @@ select option {
   border-radius: 9999px;
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #444444;
+}
+
+/* Light palette: clean whites and neutral grays, with blue replacing indigo/purple accents. */
+.theme-light {
+  --color-slate-50: var(--color-neutral-50);
+  --color-slate-100: var(--color-neutral-100);
+  --color-slate-200: var(--color-neutral-200);
+  --color-slate-300: var(--color-neutral-300);
+  --color-slate-400: var(--color-neutral-400);
+  --color-slate-500: var(--color-neutral-500);
+  --color-slate-600: var(--color-neutral-600);
+  --color-slate-700: var(--color-neutral-700);
+  --color-slate-800: var(--color-neutral-800);
+  --color-slate-900: var(--color-neutral-900);
+  --color-slate-950: var(--color-neutral-950);
+  --color-indigo-50: var(--color-blue-50);
+  --color-indigo-100: var(--color-blue-100);
+  --color-indigo-200: var(--color-blue-200);
+  --color-indigo-300: var(--color-blue-300);
+  --color-indigo-400: var(--color-blue-400);
+  --color-indigo-500: var(--color-blue-500);
+  --color-indigo-600: var(--color-blue-600);
+  --color-indigo-700: var(--color-blue-700);
+  --color-indigo-800: var(--color-blue-800);
+  --color-indigo-900: var(--color-blue-900);
+  --color-indigo-950: var(--color-blue-950);
+  --color-purple-50: var(--color-blue-50);
+  --color-purple-100: var(--color-blue-100);
+  --color-purple-200: var(--color-blue-200);
+  --color-purple-300: var(--color-blue-300);
+  --color-purple-400: var(--color-blue-400);
+  --color-purple-500: var(--color-blue-500);
+  --color-purple-600: var(--color-blue-600);
+  --color-purple-700: var(--color-blue-700);
+  --color-purple-800: var(--color-blue-800);
+  --color-purple-900: var(--color-blue-900);
+  --color-purple-950: var(--color-blue-950);
+  --color-violet-50: var(--color-blue-50);
+  --color-violet-100: var(--color-blue-100);
+  --color-violet-200: var(--color-blue-200);
+  --color-violet-300: var(--color-blue-300);
+  --color-violet-400: var(--color-blue-400);
+  --color-violet-500: var(--color-blue-500);
+  --color-violet-600: var(--color-blue-600);
+  --color-violet-700: var(--color-blue-700);
+  --color-violet-800: var(--color-blue-800);
+  --color-violet-900: var(--color-blue-900);
+  --color-violet-950: var(--color-blue-950);
+}
+
+.theme-light [class~="bg-slate-50"],
+.theme-light [class~="bg-slate-100"] {
+  background-color: #ffffff !important;
+}
+
+/* Monochrome dark palette. Midnight remains the separate teal color theme. */
+.theme-dark {
+  --color-slate-50: var(--color-neutral-50);
+  --color-slate-100: var(--color-neutral-100);
+  --color-slate-200: var(--color-neutral-200);
+  --color-slate-300: var(--color-neutral-300);
+  --color-slate-400: var(--color-neutral-400);
+  --color-slate-500: var(--color-neutral-500);
+  --color-slate-600: var(--color-neutral-600);
+  --color-slate-700: var(--color-neutral-700);
+  --color-slate-800: var(--color-neutral-800);
+  --color-slate-900: var(--color-neutral-900);
+  --color-slate-950: var(--color-neutral-950);
+}
+
+.theme-dark [class*="text-indigo-"],
+.theme-dark [class*="text-purple-"],
+.theme-dark [class*="text-violet-"],
+.theme-dark [class*="text-blue-"],
+.theme-dark [class*="text-sky-"],
+.theme-dark [class*="text-cyan-"],
+.theme-dark [class*="text-teal-"],
+.theme-dark [class*="text-emerald-"],
+.theme-dark [class*="text-green-"],
+.theme-dark [class*="text-lime-"],
+.theme-dark [class*="text-amber-"],
+.theme-dark [class*="text-yellow-"],
+.theme-dark [class*="text-orange-"],
+.theme-dark [class*="text-red-"],
+.theme-dark [class*="text-rose-"],
+.theme-dark [class*="text-pink-"],
+.theme-dark [class*="text-fuchsia-"],
+.theme-dark [class*="text-slate-"] {
+  color: #e5e5e5 !important;
+}
+
+.theme-dark [class*="bg-indigo-"],
+.theme-dark [class*="bg-purple-"],
+.theme-dark [class*="bg-violet-"],
+.theme-dark [class*="bg-blue-"],
+.theme-dark [class*="bg-sky-"],
+.theme-dark [class*="bg-cyan-"],
+.theme-dark [class*="bg-teal-"],
+.theme-dark [class*="bg-emerald-"],
+.theme-dark [class*="bg-green-"],
+.theme-dark [class*="bg-lime-"],
+.theme-dark [class*="bg-amber-"],
+.theme-dark [class*="bg-yellow-"],
+.theme-dark [class*="bg-orange-"],
+.theme-dark [class*="bg-red-"],
+.theme-dark [class*="bg-rose-"],
+.theme-dark [class*="bg-pink-"],
+.theme-dark [class*="bg-fuchsia-"],
+.theme-dark [class*="bg-slate-"] {
+  background-color: #111111 !important;
+}
+
+.theme-dark [class*="border-indigo-"],
+.theme-dark [class*="border-purple-"],
+.theme-dark [class*="border-violet-"],
+.theme-dark [class*="border-blue-"],
+.theme-dark [class*="border-sky-"],
+.theme-dark [class*="border-cyan-"],
+.theme-dark [class*="border-teal-"],
+.theme-dark [class*="border-emerald-"],
+.theme-dark [class*="border-green-"],
+.theme-dark [class*="border-lime-"],
+.theme-dark [class*="border-amber-"],
+.theme-dark [class*="border-yellow-"],
+.theme-dark [class*="border-orange-"],
+.theme-dark [class*="border-red-"],
+.theme-dark [class*="border-rose-"],
+.theme-dark [class*="border-pink-"],
+.theme-dark [class*="border-fuchsia-"],
+.theme-dark [class*="border-slate-"] {
+  border-color: #404040 !important;
+}
+
+.theme-dark [class*="bg-gradient"] {
+  background-image: none !important;
+  background-color: #111111 !important;
+}
+
+.theme-light .login-screen {
+  background-image: none !important;
+  background-color: #ffffff !important;
+}
+
+.theme-dark .login-screen {
+  background-image: none !important;
+  background-color: #000000 !important;
+}
+
+.theme-light .brand-mark {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.theme-dark .brand-mark {
+  background-color: #111111;
+  color: #ffffff;
+}
+
+.theme-midnight .brand-mark {
+  background-color: #061c20;
+  color: #34d399;
 }

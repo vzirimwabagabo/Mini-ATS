@@ -40,6 +40,7 @@ const ATSApp: React.FC = () => {
   const [candidateToEdit, setCandidateToEdit] = useState<Candidate | null>(null);
 
   const [isJobModalOpen, setIsJobModalOpen] = useState<boolean>(false);
+  const [jobToEdit, setJobToEdit] = useState<Job | null>(null);
   const [isJobListModalOpen, setIsJobListModalOpen] = useState<boolean>(false);
   const [isAdminAccountModalOpen, setIsAdminAccountModalOpen] = useState<boolean>(false);
   const [isAssumptionsModalOpen, setIsAssumptionsModalOpen] = useState<boolean>(false);
@@ -81,6 +82,13 @@ const ATSApp: React.FC = () => {
 
   // Candidate actions
   const handleStageChange = async (candidateId: string, stage: CandidateStage) => {
+    try {
+      await updateCandidateStage(candidateId, stage);
+    } catch (err) {
+      alert(`Could not update candidate stage: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      return;
+    }
+
     setCandidates((prev) =>
       prev.map((c) => (c.id === candidateId ? { ...c, stage, updatedAt: new Date().toISOString() } : c))
     );
@@ -89,7 +97,6 @@ const ATSApp: React.FC = () => {
       setSelectedCandidateForDrawer((prev) => (prev ? { ...prev, stage } : null));
     }
 
-    await updateCandidateStage(candidateId, stage);
   };
 
   const handleCandidateSaved = async (saved: Candidate) => {
@@ -110,23 +117,41 @@ const ATSApp: React.FC = () => {
   };
 
   const handleDeleteCandidate = async (candidateId: string) => {
+    try {
+      await deleteCandidate(candidateId);
+    } catch (err) {
+      alert(`Could not delete candidate: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      return;
+    }
+
     setCandidates((prev) => prev.filter((c) => c.id !== candidateId));
     if (selectedCandidateForDrawer && selectedCandidateForDrawer.id === candidateId) {
       setSelectedCandidateForDrawer(null);
     }
-    await deleteCandidate(candidateId);
   };
 
   // Job actions
   const handleJobSaved = async (newJob: Job) => {
     const saved = await saveJob(newJob as any);
-    setJobs((prev) => [saved, ...prev]);
+    setJobs((prev) => {
+      const existingIndex = prev.findIndex((job) => job.id === saved.id);
+      if (existingIndex === -1) return [saved, ...prev];
+      const next = [...prev];
+      next[existingIndex] = saved;
+      return next;
+    });
   };
 
   const handleDeleteJob = async (jobId: string) => {
+    try {
+      await deleteJob(jobId);
+    } catch (err) {
+      alert(`Could not delete job: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      return;
+    }
+
     setJobs((prev) => prev.filter((j) => j.id !== jobId));
     setCandidates((prev) => prev.filter((c) => c.jobId !== jobId));
-    await deleteJob(jobId);
   };
 
   return (
@@ -157,7 +182,10 @@ const ATSApp: React.FC = () => {
             setCandidateToEdit(null);
             setIsCandidateModalOpen(true);
           }}
-          onOpenNewJob={() => setIsJobModalOpen(true)}
+          onOpenNewJob={() => {
+            setJobToEdit(null);
+            setIsJobModalOpen(true);
+          }}
           onOpenManageJobs={() => setIsJobListModalOpen(true)}
           onStageChange={handleStageChange}
           onDeleteCandidate={handleDeleteCandidate}
@@ -178,16 +206,27 @@ const ATSApp: React.FC = () => {
 
       {/* Candidate Profile & AI Intelligence Drawer */}
       <CandidateDetailDrawer
+        key={selectedCandidateForDrawer?.id || 'no-candidate'}
         candidate={selectedCandidateForDrawer}
         jobs={jobs}
         onClose={() => setSelectedCandidateForDrawer(null)}
+        onEditCandidate={(candidate) => {
+          setCandidateToEdit(candidate);
+          setCandidateDefaultStage(candidate.stage);
+          setSelectedCandidateForDrawer(null);
+          setIsCandidateModalOpen(true);
+        }}
         onUpdateCandidate={handleCandidateSaved}
       />
 
       {/* Add / Edit Candidate Modal */}
       <CandidateModal
+        key={candidateToEdit?.id || 'new-candidate'}
         isOpen={isCandidateModalOpen}
-        onClose={() => setIsCandidateModalOpen(false)}
+        onClose={() => {
+          setIsCandidateModalOpen(false);
+          setCandidateToEdit(null);
+        }}
         jobs={jobs}
         currentCustomerId={effectiveUser?.id || currentUser.id}
         onCandidateSaved={handleCandidateSaved}
@@ -197,12 +236,17 @@ const ATSApp: React.FC = () => {
 
       {/* Post Job Modal */}
       <JobModal
+        key={jobToEdit?.id || 'new-job'}
         isOpen={isJobModalOpen}
-        onClose={() => setIsJobModalOpen(false)}
+        onClose={() => {
+          setIsJobModalOpen(false);
+          setJobToEdit(null);
+        }}
         onJobSaved={handleJobSaved}
         currentCustomerId={effectiveUser?.id || currentUser.id}
         isAdmin={currentUser.role === 'admin'}
         allProfiles={allProfiles}
+        jobToEdit={jobToEdit}
       />
 
       {/* Manage Jobs Modal */}
@@ -211,7 +255,15 @@ const ATSApp: React.FC = () => {
         onClose={() => setIsJobListModalOpen(false)}
         jobs={jobs}
         candidates={candidates}
-        onOpenNewJob={() => setIsJobModalOpen(true)}
+        onOpenNewJob={() => {
+          setJobToEdit(null);
+          setIsJobModalOpen(true);
+        }}
+        onEditJob={(job) => {
+          setJobToEdit(job);
+          setIsJobListModalOpen(false);
+          setIsJobModalOpen(true);
+        }}
         onDeleteJob={handleDeleteJob}
       />
 

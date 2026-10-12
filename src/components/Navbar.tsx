@@ -66,8 +66,8 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Brand & Logo */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white font-black text-lg shadow-md shadow-indigo-500/20">
-            ⚡
+          <div className="brand-mark w-9 h-9 rounded-xl flex items-center justify-center shadow-md">
+            <Zap className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -154,7 +154,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-white text-slate-900 shadow-xs ring-1 ring-slate-200'
                   : 'text-slate-500 hover:text-slate-900'
               }`}
-              title="Light Theme"
+              title="Light: White, black, blue"
             >
               <Sun className="w-3.5 h-3.5 text-amber-500" />
             </button>
@@ -166,7 +166,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-slate-900 text-white shadow-xs ring-1 ring-indigo-500/50'
                   : 'text-slate-500 dark:text-slate-400 hover:text-white'
               }`}
-              title="Dark Obsidian Theme"
+              title="Dark: Black and white"
             >
               <Moon className="w-3.5 h-3.5 text-indigo-400" />
             </button>
@@ -178,7 +178,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-[#0a272c] text-emerald-300 shadow-xs ring-1 ring-emerald-500'
                   : 'text-slate-500 dark:text-slate-400 hover:text-white'
               }`}
-              title="Midnight Cyber Theme"
+              title="Colorful: Midnight teal"
             >
               <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
             </button>

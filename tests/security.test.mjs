@@ -5,11 +5,20 @@ import ts from 'typescript';
 
 const authSource = await readFile(new URL('../src/context/AuthContext.tsx', import.meta.url), 'utf8');
 const schema = await readFile(new URL('../supabase/schema.sql', import.meta.url), 'utf8');
+const lifecycleMigration = await readFile(new URL('../supabase/migrations/20261012000100_customer_account_lifecycle.sql', import.meta.url), 'utf8');
 const adminFunction = await readFile(new URL('../supabase/functions/admin-create-account/index.ts', import.meta.url), 'utf8');
 const adminModal = await readFile(new URL('../src/components/AdminAccountModal.tsx', import.meta.url), 'utf8');
+const loginView = await readFile(new URL('../src/components/LoginView.tsx', import.meta.url), 'utf8');
+const appSource = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
+const jobListSource = await readFile(new URL('../src/components/JobListModal.tsx', import.meta.url), 'utf8');
+const jobModalSource = await readFile(new URL('../src/components/JobModal.tsx', import.meta.url), 'utf8');
+const candidateDetailSource = await readFile(new URL('../src/components/CandidateDetailDrawer.tsx', import.meta.url), 'utf8');
+const storageSource = await readFile(new URL('../src/lib/storage.ts', import.meta.url), 'utf8');
+const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
 const parserSource = await readFile(new URL('../src/lib/cvParser.ts', import.meta.url), 'utf8');
 const safeUrlSource = await readFile(new URL('../src/lib/safeExternalUrl.ts', import.meta.url), 'utf8');
 const functionErrorSource = await readFile(new URL('../src/lib/functionError.ts', import.meta.url), 'utf8');
+const themeStyles = await readFile(new URL('../src/index.css', import.meta.url), 'utf8');
 const clientAiSources = await Promise.all([
   '../src/components/CandidateModal.tsx',
   '../src/components/CandidateDetailDrawer.tsx',
@@ -46,9 +55,9 @@ test('configured cloud login cannot fall through to local profiles', () => {
 });
 
 test('RLS policies scope cloud data to authenticated owners or admins', () => {
-  assert.match(schema, /FOR SELECT TO authenticated[\s\S]*?id = \(SELECT auth\.uid\(\)\) OR public\.is_admin\(\)/);
-  assert.match(schema, /CREATE POLICY "Jobs tenant access"[\s\S]*?customer_id = \(SELECT auth\.uid\(\)\) OR public\.is_admin\(\)/);
-  assert.match(schema, /CREATE POLICY "Candidates tenant access"[\s\S]*?jobs\.customer_id = candidates\.customer_id/);
+  assert.match(schema, /FOR SELECT TO authenticated[\s\S]*?id = \(SELECT auth\.uid\(\)\) AND is_active\) OR public\.is_admin\(\)/);
+  assert.match(schema, /CREATE POLICY "Jobs tenant access"[\s\S]*?customer_id = \(SELECT auth\.uid\(\)\) AND public\.is_active_user\(\)/);
+  assert.match(schema, /CREATE POLICY "Candidates tenant access"[\s\S]*?public\.is_active_user\(\)[\s\S]*?jobs\.customer_id = candidates\.customer_id/);
   assert.doesNotMatch(schema, /CREATE POLICY[^;]+USING\s*\(true\)/i);
   assert.match(schema, /'customer'[\s\S]*?ON CONFLICT \(id\) DO NOTHING/);
 });
@@ -123,4 +132,73 @@ test('admin account editing validates Auth targets and prevents demoting the sig
   assert.match(adminModal, /onClick=\{\(\) => handleEdit\(p\)\}/);
   assert.match(adminModal, /Save Changes/);
   assert.match(adminModal, /Login email \(not editable here\)/);
+});
+
+test('inactive accounts are blocked by RLS and only admins can change customer status', () => {
+  assert.match(schema, /is_active BOOLEAN NOT NULL DEFAULT TRUE/);
+  assert.match(schema, /CREATE OR REPLACE FUNCTION public\.is_active_user\(\)/);
+  assert.match(schema, /public\.is_active_user\(\)/);
+  assert.match(lifecycleMigration, /ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT TRUE/);
+  assert.match(adminFunction, /profile\?\.role !== 'admin' \|\| !profile\.is_active/);
+  assert.match(adminFunction, /action === 'set-active'/);
+  assert.match(adminFunction, /targetProfile\.role !== 'customer'/);
+  assert.match(adminFunction, /update\(\{ is_active: isActive \}\)/);
+  assert.match(adminModal, /Reactivate customer/);
+  assert.match(adminModal, /Deactivate customer/);
+});
+
+test('jobs and candidates expose create, read, update, and delete paths', () => {
+  assert.match(jobListSource, /onEditJob\(job\)/);
+  assert.match(jobModalSource, /jobToEdit\?\.id/);
+  assert.match(candidateDetailSource, /onEditCandidate\(candidate\)/);
+  assert.match(appSource, /setCandidateToEdit\(candidate\)/);
+  assert.match(storageSource, /export async function deleteJob/);
+  assert.match(storageSource, /export async function deleteCandidate/);
+  assert.match(storageSource, /export async function saveJob/);
+  assert.match(storageSource, /export async function saveCandidate/);
+});
+
+test('Supabase write failures do not silently fall back to local demo persistence', () => {
+  assert.match(storageSource, /Could not save the job to Supabase/);
+  assert.match(storageSource, /Could not save the candidate to Supabase/);
+  assert.match(storageSource, /Could not update the candidate stage in Supabase/);
+  assert.match(storageSource, /Could not delete the candidate from Supabase/);
+  assert.match(storageSource, /Could not delete the job from Supabase/);
+});
+
+test('configured Supabase reads fail closed and backend updates have one documented npm command', () => {
+  for (const [start, end] of [
+    ['export async function fetchAllProfiles', 'export async function fetchJobs'],
+    ['export async function fetchJobs', 'export async function fetchCandidates'],
+    ['export async function fetchCandidates', 'export async function saveJob'],
+  ]) {
+    const startIndex = storageSource.indexOf(start);
+    const endIndex = storageSource.indexOf(end, startIndex + start.length);
+    assert.ok(startIndex >= 0 && endIndex > startIndex);
+    const readFunction = storageSource.slice(startIndex, endIndex);
+    assert.match(readFunction, /if \(supabase\) \{[\s\S]*?catch \{[\s\S]*?throw new Error\(/);
+  }
+
+  assert.match(packageJson.scripts['supabase:update'], /supabase db push --linked --yes/);
+  assert.match(packageJson.scripts['supabase:update'], /supabase functions deploy admin-create-account/);
+  assert.doesNotMatch(lifecycleMigration, /DROP TABLE|TRUNCATE|DELETE FROM/i);
+});
+
+test('login and account creation password fields are masked by default and have accessible visibility toggles', () => {
+  for (const source of [loginView, adminModal]) {
+    assert.match(source, /type=\{showPassword \? 'text' : 'password'\}/);
+    assert.match(source, /aria-pressed=\{showPassword\}/);
+    assert.match(source, /setShowPassword\(\(visible\) => !visible\)/);
+  }
+});
+
+test('light theme is white/blue, dark theme is monochrome, and Midnight remains separate', () => {
+  assert.match(themeStyles, /--color-indigo-600:\s*var\(--color-blue-600\)/);
+  assert.match(themeStyles, /html\.theme-light, body\.theme-light\s*\{\s*background-color:\s*#ffffff/);
+  assert.match(themeStyles, /html\.dark, body\.dark\s*\{\s*background-color:\s*#000000/);
+  assert.match(themeStyles, /\.theme-dark \[class\*="text-emerald-"\][\s\S]*?color:\s*#e5e5e5/);
+  assert.match(themeStyles, /\.theme-midnight header[\s\S]*?background-color:\s*#061c20/);
+  assert.match(loginView, /aria-label="Use light theme"/);
+  assert.match(loginView, /aria-label="Use dark theme"/);
+  assert.match(loginView, /aria-label="Use colorful midnight theme"/);
 });

@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Shield, User, Lock, Mail, ArrowRight, Sparkles, Building, CheckCircle2, Eye, EyeOff, Zap, Sun, Moon, Clock, AlertCircle, CheckCircle } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { ResetPasswordModal } from './ResetPasswordModal';
 
 export const LoginView: React.FC = () => {
-  const { login, createAccount, requestPasswordReset, isSupabaseConfigured } = useAuth();
+  const { login, createAccount, requestPasswordReset, isSupabaseConfigured, isPasswordRecovery, setIsPasswordRecovery } = useAuth();
   const { theme, setTheme } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -455,6 +456,10 @@ export const LoginView: React.FC = () => {
           )}
         </div>
       </div>
+      <ResetPasswordModal
+        isOpen={isPasswordRecovery}
+        onClose={() => setIsPasswordRecovery(false)}
+      />
     </div>
   );
 };

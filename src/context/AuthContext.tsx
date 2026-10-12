@@ -18,6 +18,8 @@ interface AuthContextType {
   setAccountActive: (userId: string, isActive: boolean) => Promise<UserProfile>;
   requestPasswordReset: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
+  isPasswordRecovery: boolean;
+  setIsPasswordRecovery: (isRecovery: boolean) => void;
   refreshProfiles: () => Promise<void>;
   switchUserRoleDemo: (role: UserRole) => void;
 }
@@ -32,6 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [allProfiles, setAllProfiles] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSupabaseConfigured, setIsSupabaseConfigured] = useState<boolean>(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState<boolean>(false);
 
   useEffect(() => {
     const { isConfigured } = getSupabaseConfig();
@@ -67,6 +70,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const supabase = getSupabaseClient();
         if (supabase) {
+          // Detect password recovery flags in URL
+          const hash = window.location.hash || '';
+          const search = window.location.search || '';
+          if (
+            hash.includes('type=recovery') ||
+            search.includes('type=recovery') ||
+            search.includes('recovery') ||
+            hash.includes('recovery_token')
+          ) {
+            setIsPasswordRecovery(true);
+          }
+
           const { data } = await supabase.auth.getSession();
           if (data?.session?.user) {
             const { data: profile } = await supabase
@@ -85,8 +100,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 createdAt: profile.created_at
               };
               setCurrentUser(u);
-              const profiles = await fetchAllProfiles();
-              setAllProfiles(profiles);
+              if (profile.role === 'admin') {
+                const profiles = await fetchAllProfiles();
+                setAllProfiles(profiles);
+              }
             } else {
               await supabase.auth.signOut();
             }
@@ -100,6 +117,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     initAuth();
+
+    if (isConfigured) {
+      const supabase = getSupabaseClient();
+      if (supabase) {
+        const { data: listener } = supabase.auth.onAuthStateChange(async (event) => {
+          if (event === 'PASSWORD_RECOVERY') {
+            setIsPasswordRecovery(true);
+          } else if (event === 'SIGNED_OUT') {
+            setCurrentUser(null);
+            setIsPasswordRecovery(false);
+          }
+        });
+
+        return () => {
+          listener?.subscription?.unsubscribe();
+        };
+      }
+    }
   }, []);
 
   const refreshProfiles = async () => {
@@ -266,6 +301,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const profiles = getStoredProfiles();
       const exists = profiles.some(p => p.email.toLowerCase() === resetEmail.trim().toLowerCase());
       if (!exists) throw new Error('No user account found with that email address.');
+      setIsPasswordRecovery(true);
     }
   };
 
@@ -276,6 +312,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password: newPassword
       });
       if (error) throw new Error(error.message);
+      setIsPasswordRecovery(false);
+      if (window.history.replaceState) {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    } else {
+      setIsPasswordRecovery(false);
     }
   };
 
@@ -311,6 +353,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setAccountActive,
         requestPasswordReset,
         updatePassword,
+        isPasswordRecovery,
+        setIsPasswordRecovery,
         refreshProfiles,
         switchUserRoleDemo
       }}

@@ -25,10 +25,11 @@ import { AssumptionsModal } from './components/AssumptionsModal';
 import { DatabaseSetupWizardModal } from './components/DatabaseSetupWizardModal';
 import { Footer } from './components/Footer';
 import { LegalModal, LegalDocType } from './components/LegalModal';
+import { ResetPasswordModal } from './components/ResetPasswordModal';
 import { Bell, Shield } from 'lucide-react';
 
 const ATSApp: React.FC = () => {
-  const { currentUser, effectiveUser, impersonatedCustomer, allProfiles, refreshProfiles } = useAuth();
+  const { currentUser, effectiveUser, impersonatedCustomer, allProfiles, refreshProfiles, isPasswordRecovery, setIsPasswordRecovery } = useAuth();
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -338,6 +339,12 @@ const ATSApp: React.FC = () => {
         isOpen={isLegalModalOpen}
         onClose={() => setIsLegalModalOpen(false)}
         initialDoc={legalDocType}
+      />
+
+      {/* Password Recovery Modal */}
+      <ResetPasswordModal
+        isOpen={isPasswordRecovery}
+        onClose={() => setIsPasswordRecovery(false)}
       />
     </div>
   );

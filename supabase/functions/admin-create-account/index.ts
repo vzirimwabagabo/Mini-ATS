@@ -20,7 +20,8 @@ const allowedOrigins = [...new Set([
 function isOriginAllowed(origin: string | null): boolean {
   if (!origin) return true;
   if (allowedOrigins.includes(origin)) return true;
-  // Allow all Cloudflare Pages deployment URLs (*.pages.dev)
+  // Allow all Vercel deployment URLs (*.vercel.app) and Cloudflare Pages (*.pages.dev)
+  if (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)) return true;
   if (/^https:\/\/[a-z0-9-]+\.pages\.dev$/i.test(origin)) return true;
   return false;
 }

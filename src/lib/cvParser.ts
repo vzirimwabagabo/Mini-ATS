@@ -120,6 +120,20 @@ export async function extractTextFromFile(file: File): Promise<FileExtractionRes
     return { text, fileType, fileName: file.name, fileSizeKB };
   } catch (err: any) {
     console.error('[cvParser] Extraction failed:', err);
+    const isChunkLoadError = 
+      err?.message?.toLowerCase().includes('failed to fetch dynamically imported module') ||
+      err?.message?.toLowerCase().includes('dynamically imported');
+
+    if (isChunkLoadError) {
+      return {
+        text: '',
+        fileType,
+        fileName: file.name,
+        fileSizeKB,
+        error: 'A new version of the app was recently deployed. Please refresh your browser tab (Ctrl+F5 / Cmd+Shift+R) to load the latest parser assets, or copy-paste the CV text below.',
+      };
+    }
+
     return {
       text: '',
       fileType,

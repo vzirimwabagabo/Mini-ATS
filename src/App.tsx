@@ -26,6 +26,7 @@ import { DatabaseSetupWizardModal } from './components/DatabaseSetupWizardModal'
 import { Footer } from './components/Footer';
 import { LegalModal, LegalDocType } from './components/LegalModal';
 import { ResetPasswordModal } from './components/ResetPasswordModal';
+import { UserManualModal } from './components/UserManualModal';
 import { Bell, Shield, Clock } from 'lucide-react';
 
 const ATSApp: React.FC = () => {
@@ -49,6 +50,20 @@ const ATSApp: React.FC = () => {
   const [isDatabaseWizardOpen, setIsDatabaseWizardOpen] = useState<boolean>(false);
   const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(false);
   const [legalDocType, setLegalDocType] = useState<LegalDocType>('privacy');
+  const [isUserManualOpen, setIsUserManualOpen] = useState<boolean>(false);
+
+  // Auto-launch guided tour for new users who haven't completed it yet
+  useEffect(() => {
+    if (currentUser) {
+      const tourCompleted = localStorage.getItem('mini_ats_tour_completed');
+      if (!tourCompleted) {
+        const timer = setTimeout(() => {
+          setIsUserManualOpen(true);
+        }, 600);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [currentUser?.id]);
 
   // Load data whenever effectiveUser changes
   useEffect(() => {
@@ -183,6 +198,7 @@ const ATSApp: React.FC = () => {
         onOpenCreateAccount={() => setIsAdminAccountModalOpen(true)}
         onOpenAssumptions={() => setIsAssumptionsModalOpen(true)}
         onOpenDatabaseWizard={() => setIsDatabaseWizardOpen(true)}
+        onOpenUserManual={() => setIsUserManualOpen(true)}
       />
 
       {currentUser?.role === 'admin' && pendingCustomerApprovals.length > 0 && (
@@ -250,6 +266,7 @@ const ATSApp: React.FC = () => {
           setIsLegalModalOpen(true);
         }}
         onResetData={resetDemoData}
+        onOpenUserManual={() => setIsUserManualOpen(true)}
       />
 
       {/* Candidate Profile & AI Intelligence Drawer */}
@@ -345,6 +362,12 @@ const ATSApp: React.FC = () => {
       <ResetPasswordModal
         isOpen={isPasswordRecovery}
         onClose={() => setIsPasswordRecovery(false)}
+      />
+
+      {/* Platform User Manual & Guided Tour Modal */}
+      <UserManualModal
+        isOpen={isUserManualOpen}
+        onClose={() => setIsUserManualOpen(false)}
       />
 
       {/* Session Inactivity Expiration Warning */}

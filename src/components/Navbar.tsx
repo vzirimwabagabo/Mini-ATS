@@ -11,19 +11,22 @@ import {
   Moon,
   Sparkles,
   Zap,
-  Bell
+  Bell,
+  BookOpen
 } from 'lucide-react';
 
 interface NavbarProps {
   onOpenCreateAccount: () => void;
   onOpenAssumptions: () => void;
   onOpenDatabaseWizard: () => void;
+  onOpenUserManual: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   onOpenCreateAccount,
   onOpenAssumptions,
   onOpenDatabaseWizard,
+  onOpenUserManual,
 }) => {
   const { 
     currentUser, 
@@ -200,6 +203,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
             </button>
           </div>
+
+          {/* User Guide & Interactive Tour */}
+          <button
+            type="button"
+            onClick={onOpenUserManual}
+            className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors shadow-2xs"
+            title="User Manual & Interactive Tour"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <span className="hidden sm:inline">User Guide</span>
+          </button>
 
           {/* Assumptions & Design decisions */}
           <button

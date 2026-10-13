@@ -19,7 +19,8 @@ import {
   AlertCircle,
   Building2,
   Server,
-  HeartHandshake
+  HeartHandshake,
+  BookOpen
 } from 'lucide-react';
 
 interface FooterProps {
@@ -29,6 +30,7 @@ interface FooterProps {
   onOpenDatabaseWizard: () => void;
   onOpenLegal: (doc: LegalDocType) => void;
   onResetData: () => void;
+  onOpenUserManual: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -37,7 +39,8 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenAssumptions,
   onOpenDatabaseWizard,
   onOpenLegal,
-  onResetData
+  onResetData,
+  onOpenUserManual
 }) => {
   const { currentUser, impersonatedCustomer, isSupabaseConfigured } = useAuth();
 
@@ -107,8 +110,18 @@ export const Footer: React.FC<FooterProps> = ({
               <li>
                 <button
                   type="button"
+                  onClick={onOpenUserManual}
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-bold"
+                >
+                  <BookOpen className="w-3 h-3" />
+                  User Manual &amp; Interactive Tour
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
                   onClick={onOpenAssumptions}
-                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1 text-indigo-600 dark:text-indigo-400 font-semibold"
+                  className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:underline"
                 >
                   <HelpCircle className="w-3 h-3" />
                   Product Assumptions &amp; Specs

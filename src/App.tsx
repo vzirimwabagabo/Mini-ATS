@@ -52,10 +52,11 @@ const ATSApp: React.FC = () => {
   const [legalDocType, setLegalDocType] = useState<LegalDocType>('privacy');
   const [isUserManualOpen, setIsUserManualOpen] = useState<boolean>(false);
 
-  // Auto-launch guided tour for new users who haven't completed it yet
+  // Auto-launch role-tailored guided tour for users who haven't completed it yet
   useEffect(() => {
     if (currentUser) {
-      const tourCompleted = localStorage.getItem('mini_ats_tour_completed');
+      const roleKey = `mini_ats_tour_completed_${currentUser.role}`;
+      const tourCompleted = localStorage.getItem(roleKey) || localStorage.getItem('mini_ats_tour_completed');
       if (!tourCompleted) {
         const timer = setTimeout(() => {
           setIsUserManualOpen(true);
@@ -63,7 +64,7 @@ const ATSApp: React.FC = () => {
         return () => clearTimeout(timer);
       }
     }
-  }, [currentUser?.id]);
+  }, [currentUser?.id, currentUser?.role]);
 
   // Load data whenever effectiveUser changes
   useEffect(() => {

@@ -23,7 +23,8 @@ import {
   ChevronRight,
   HelpCircle,
   Zap,
-  Info
+  UserCheck,
+  UserCog
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -33,131 +34,195 @@ interface UserManualModalProps {
   initialMode?: 'tour' | 'manual';
 }
 
-const STORAGE_KEY_TOUR_COMPLETED = 'mini_ats_tour_completed';
-
 interface TourStep {
   title: string;
-  role: 'both' | 'customer' | 'admin';
-  icon: React.ReactNode;
   badge: string;
   badgeColor: string;
+  icon: React.ReactNode;
   summary: string;
   bulletPoints: string[];
   proTip: string;
 }
 
-const TOUR_STEPS: TourStep[] = [
+// 1. CUSTOMER-SPECIFIC TOUR STEPS
+const CUSTOMER_TOUR_STEPS: TourStep[] = [
   {
-    title: 'Welcome to Mini ATS',
-    role: 'both',
-    icon: <Zap className="w-6 h-6 text-indigo-500" />,
-    badge: 'Platform Overview',
+    title: 'Welcome to Your Hiring Workspace',
+    badge: 'Customer Workspace',
     badgeColor: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
-    summary: 'Mini ATS is a high-speed, modern Applicant Tracking System engineered with AI-powered resume screening, compact Kanban workflows, and strict multi-tenant data isolation.',
+    icon: <Briefcase className="w-6 h-6 text-indigo-600" />,
+    summary: 'Welcome to Mini ATS! As an approved customer organization, you can post open positions, add applicants, run automated AI resume screenings, and track hiring stages.',
     bulletPoints: [
-      'Two distinct roles: Administrators oversee the platform; Customers manage company hiring.',
-      'Operates seamlessly with real Supabase cloud backends or offline instant demo storage.',
-      'Theme flexibility: Switch effortlessly between Light (Clean Blue), Dark (Monochrome), and Midnight (Deep Teal).'
+      'Your jobs and candidates are strictly isolated to your company profile.',
+      'Access real-time visual hiring boards and automated candidate scoring.',
+      'Customize your display with Light, Dark, or Midnight colorful themes in the header.'
     ],
-    proTip: 'You can switch themes anytime using the Sun / Moon / Sparkles icons in the top navigation bar.'
+    proTip: 'Everything you create is saved in real-time, whether operating against cloud Supabase or local offline storage.'
   },
   {
-    title: 'Customer: Creating & Managing Job Openings',
-    role: 'customer',
-    icon: <Briefcase className="w-6 h-6 text-blue-500" />,
-    badge: 'Customer Core',
+    title: 'Posting & Managing Job Openings',
+    badge: 'Job Management',
     badgeColor: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-    summary: 'Customers can post and maintain unlimited job openings tailored to their specific hiring pipelines.',
+    icon: <Building className="w-6 h-6 text-blue-600" />,
+    summary: 'Create and tailor unlimited job postings for your team.',
     bulletPoints: [
-      'Click "+ New Job" in the dashboard header to create an opening with title, department, location, and salary.',
-      'Add key requirement tags (e.g. "React", "TypeScript", "PostgreSQL") used by the AI engine to evaluate candidates.',
-      'Edit or close jobs from the "Manage Openings" menu without losing candidate application histories.'
+      'Click "+ New Job" in the dashboard action bar to define the job title, department, location, and salary.',
+      'Add key skill requirements (e.g. "React", "TypeScript", "PostgreSQL").',
+      'The AI resume evaluator compares uploaded applicant CVs directly against your requirements list.',
+      'Pause, close, or reactivate openings at any time from "Manage Openings" without losing candidate history.'
     ],
-    proTip: 'Make requirements specific: our AI evaluator compares candidate CVs directly against the job requirements list.'
+    proTip: 'Be specific with requirement keywords: clear skill tags dramatically improve AI candidate match precision.'
   },
   {
-    title: 'Customer: Sourcing & Adding Candidates',
-    role: 'customer',
-    icon: <Users className="w-6 h-6 text-emerald-500" />,
-    badge: 'Candidate Pipeline',
+    title: 'Adding Candidates & Uploading Resumes',
+    badge: 'Candidate Intake',
     badgeColor: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
-    summary: 'Add candidates manually or upload resumes (PDF, Word DOCX, TXT) with automatic client-side text extraction.',
+    icon: <Users className="w-6 h-6 text-emerald-600" />,
+    summary: 'Collect applications with rich contact details, verified professional links, and uploaded CV files.',
     bulletPoints: [
-      'Click "+ Add Candidate" to select the job opening, name, email, and optional phone or LinkedIn profile link.',
-      'Drop a resume file to automatically extract full text and populate application details.',
-      'All external URLs are strictly validated for safe, credential-free HTTPS web navigation.'
+      'Click "+ Add Candidate" and select the relevant job opening from your list.',
+      'Enter candidate name, email, phone number, and verified LinkedIn profile link.',
+      'Upload resumes in PDF, Word (.docx), or TXT format with automatic client-side text extraction (10 MB max).',
+      'Extracted resume text is instantly parsed and stored for keyword search and AI evaluation.'
     ],
-    proTip: 'Uploaded PDF resumes are processed client-side via Mozilla pdf.js worker — zero third-party data leaks.'
+    proTip: 'PDF extraction runs 100% inside your browser via Mozilla pdf.js worker — zero third-party leakage of applicant documents.'
   },
   {
-    title: 'AI Candidate Evaluation & Match Scoring',
-    role: 'both',
-    icon: <Sparkles className="w-6 h-6 text-purple-500" />,
-    badge: 'AI Screening',
+    title: 'AI CV Evaluation & Match Scoring',
+    badge: 'AI Candidate Screening',
     badgeColor: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-800',
-    summary: 'Instant automated assessment that scores candidates from 0 to 100 based on job requirement alignment.',
+    icon: <Sparkles className="w-6 h-6 text-purple-600" />,
+    summary: 'Instant automated assessment that scores candidates from 0 to 100% against your job requirements.',
     bulletPoints: [
-      'Click "Run AI Screening" in candidate details to generate a match score, summary, key strengths, and gaps.',
-      'Recommends optimal pipeline stages (e.g., Screening, Technical Interview, or Offer) based on verified skills.',
-      'Operates securely with fallback heuristic algorithms when external AI keys are unavailable.'
+      'Open any candidate card and click "Run AI Screening" in their profile drawer.',
+      'Calculates an objective match percentage, executive assessment summary, key strengths, and missing skill gaps.',
+      'Recommends optimal pipeline stages (Screening, Interview, or Offer) based on verified qualifications.',
+      'Includes fallback algorithms so screening operates reliably even if third-party AI keys are unavailable.'
     ],
-    proTip: 'Check the "Strengths & Gaps" section in the Candidate Drawer before scheduling your interview round.'
+    proTip: 'Review the "Strengths & Gaps" section before interview rounds to ask targeted technical questions.'
   },
   {
-    title: 'Compact Kanban Board & Stage Transitions',
-    role: 'both',
-    icon: <Layers className="w-6 h-6 text-cyan-500" />,
-    badge: 'Visual Pipeline',
+    title: 'Operating Your Kanban Hiring Pipeline',
+    badge: 'Visual Kanban',
     badgeColor: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800',
-    summary: 'Track candidate progress across 6 distinct stages: Sourced, Screening, Interview, Offer, Hired, and Rejected.',
+    icon: <Layers className="w-6 h-6 text-cyan-600" />,
+    summary: 'Monitor and transition candidates across 6 pipeline stages: Sourced, Screening, Interview, Offer, Hired, and Rejected.',
     bulletPoints: [
-      'Drag and drop candidate cards across columns to advance them through the hiring process.',
-      'Toggle "Compact View" to auto-shrink empty stages and maximize screen density on laptops.',
-      'Real-time filter bar lets you search candidates by name, job title, and stage instantly.'
+      'Drag and drop cards across stage columns to immediately update their hiring status.',
+      'Filter candidates in real-time by Job Opening, candidate name, or tag directly in the top search bar.',
+      'Toggle "Compact View" to auto-collapse empty columns and maximize screen space on laptops.'
     ],
-    proTip: 'Click any candidate card to open their detail drawer, read notes, update stage, or review their CV text.'
+    proTip: 'Click any candidate card to open their detail drawer, leave notes, inspect their CV text, or update stages.'
   },
   {
-    title: 'Admin: Account Management & Approval',
-    role: 'admin',
-    icon: <Shield className="w-6 h-6 text-amber-500" />,
-    badge: 'Administrator Control',
-    badgeColor: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-    summary: 'Administrators have full governance over the platform, safeguarding candidate data from unauthorized job postings.',
-    bulletPoints: [
-      'New customer signups default to "Pending Approval" — admins review and click "Approve" to grant access.',
-      'Admins can provision new Customer and Administrator accounts directly from the Accounts modal.',
-      'Deactivate or permanently delete accounts with automatic cascading cleanup of jobs and candidates.'
-    ],
-    proTip: 'The primary super admin (vzirimwabagabo0@gmail.com) is permanently protected against deletion or deactivation.'
-  },
-  {
-    title: 'Admin: Acting on Behalf of Customers',
-    role: 'admin',
-    icon: <Compass className="w-6 h-6 text-purple-600" />,
-    badge: 'Admin Delegation',
-    badgeColor: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-800',
-    summary: 'Admins can do everything a customer can do on their behalf without needing customer passwords.',
-    bulletPoints: [
-      'Select any customer company from the "Customer Context" dropdown in the navbar.',
-      'A prominent amber banner confirms delegation mode: all created jobs and candidates are credited to that customer.',
-      'Click "Exit Customer View" anytime to return to platform-wide administration overview.'
-    ],
-    proTip: 'Delegation allows hiring agencies or platform support to assist customers in real time with complete auditability.'
-  },
-  {
-    title: 'Platform Security & 30-Minute Inactivity Logout',
-    role: 'both',
-    icon: <Clock className="w-6 h-6 text-rose-500" />,
+    title: 'Session Privacy & Inactivity Auto-Logout',
     badge: 'Security & Compliance',
     badgeColor: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800',
-    summary: 'Built with enterprise-grade data privacy and proactive session monitoring.',
+    icon: <Clock className="w-6 h-6 text-rose-600" />,
+    summary: 'Your organization account is protected with automated inactivity monitoring to safeguard sensitive applicant PII.',
     bulletPoints: [
-      'Automatic Inactivity Timeout: sessions automatically expire after 30 minutes of inactivity to protect sensitive candidate PII.',
-      'Warning Banner: a friendly notification appears 2 minutes before expiration, allowing you to click "Stay Signed In".',
-      'Password Reset: securely request reset links sent to your verified email with one-click token clearing.'
+      'Sessions automatically expire after 30 minutes of inactivity.',
+      'A friendly notification appears 2 minutes before expiration, allowing you to click "Stay Signed In".',
+      'Forgot password? Click "Forgot password?" on the sign-in screen to receive a secure password recovery link.'
     ],
-    proTip: 'Moving your mouse, typing, or clicking automatically keeps your session alive while actively working.'
+    proTip: 'Moving your mouse, typing, or clicking automatically keeps your session active while you work.'
+  }
+];
+
+// 2. ADMINISTRATOR-SPECIFIC TOUR STEPS
+const ADMIN_TOUR_STEPS: TourStep[] = [
+  {
+    title: 'Welcome, Platform Administrator!',
+    badge: 'Admin Overview',
+    badgeColor: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+    icon: <Shield className="w-6 h-6 text-purple-600" />,
+    summary: 'As a system administrator, you have complete governance over the platform: approving organizations, managing customer pipelines, provisioning users, and enforcing security policies.',
+    bulletPoints: [
+      'Multi-tenant oversight: view system-wide candidates and job openings across all customer companies.',
+      'Full administrative delegation: act on behalf of any customer to post jobs or screen applicants.',
+      'Real-time account lifecycle management with Supabase Auth integration.'
+    ],
+    proTip: 'You can switch between system-wide "All Accounts" view or specific customer contexts anytime in the top navbar.'
+  },
+  {
+    title: 'Reviewing & Approving Customer Registrations',
+    badge: 'Account Approvals',
+    badgeColor: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    icon: <UserCheck className="w-6 h-6 text-amber-600" />,
+    summary: 'To prevent fraudulent or spam job openings, all self-registered customer companies arrive in "Pending Approval" status.',
+    bulletPoints: [
+      'Whenever new customers sign up, an amber "Sign-Up Alert" banner appears at the top of your dashboard.',
+      'Click "Review & Approve" (or open "Accounts" in the header) to inspect customer credentials.',
+      'Click "Approve" to activate their account so they can sign in and begin posting jobs.',
+      'Unapproved accounts are blocked at the Row Level Security (RLS) database layer from accessing any platform data.'
+    ],
+    proTip: 'You can also temporarily deactivate existing customer companies if an organization is paused or suspicious.'
+  },
+  {
+    title: 'Admin Delegation: Act on Behalf of Customers',
+    badge: 'Customer Impersonation',
+    badgeColor: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
+    icon: <UserCog className="w-6 h-6 text-indigo-600" />,
+    summary: 'Admins can perform every single customer action on their behalf without needing customer passwords.',
+    bulletPoints: [
+      'In the top header, select any customer company from the "Customer Context" dropdown.',
+      'An amber banner confirms delegation mode: all jobs created and candidates added are attributed to that specific customer.',
+      'Click "Exit Customer View" at any time to return to full platform-wide administration.'
+    ],
+    proTip: 'Delegation is ideal for recruiting agencies and enterprise support agents helping hiring managers in real time.'
+  },
+  {
+    title: 'Account Provisioning, Deactivations & Deletions',
+    badge: 'User Lifecycle',
+    badgeColor: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+    icon: <Users className="w-6 h-6 text-blue-600" />,
+    summary: 'Create and delete both Customer and Administrator accounts with full safety guardrails.',
+    bulletPoints: [
+      'Click "Accounts" in the navbar to provision new Customer or Admin accounts with secure initial credentials.',
+      'Permanent Deletion: clicking the red trash icon removes the account from Supabase Auth and database tables.',
+      'Cascading Cleanup: deleting a customer cleanly cascades and deletes their jobs and candidates (Postgres ON DELETE CASCADE).',
+      'Lockout Protections: you cannot delete your own signed-in account, and you cannot delete the last remaining admin.'
+    ],
+    proTip: 'Customer initial passwords in cloud mode require a minimum of 12 characters to enforce enterprise password standards.'
+  },
+  {
+    title: 'Super Admin Permanent Immunity',
+    badge: 'Super Admin Safeguard',
+    badgeColor: 'bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200 border-amber-300 dark:border-amber-700',
+    icon: <Lock className="w-6 h-6 text-amber-600" />,
+    summary: 'The primary super admin account is permanently locked down to ensure the platform can never be orphaned or hijacked.',
+    bulletPoints: [
+      'The super admin email (vzirimwabagabo0@gmail.com) is permanently protected against deletion, deactivation, and role demotion.',
+      'Enforced at both the UI layer (golden SUPER ADMIN badge with lock indicator) and the backend Edge Function / database triggers.',
+      'Even other authenticated administrators cannot delete or demote the super administrator.'
+    ],
+    proTip: 'Super Admin protection guarantees continuous, uninterrupted administrative sovereignty.'
+  },
+  {
+    title: 'AI Screening & System Kanban Governance',
+    badge: 'Pipeline Oversight',
+    badgeColor: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800',
+    icon: <Layers className="w-6 h-6 text-cyan-600" />,
+    summary: 'Inspect candidate evaluations and manage pipelines across all customer organizations.',
+    bulletPoints: [
+      'Switch between "Admin Overview (All Accounts)" to see global candidate volumes or isolate to a single customer.',
+      'Trigger AI evaluations across any candidate to audit applicant scoring and candidate suitability.',
+      'Move candidate cards across Kanban columns on behalf of hiring managers.'
+    ],
+    proTip: 'Use candidate tags (e.g. Senior, React, Architect) to quickly filter global candidate pools across all openings.'
+  },
+  {
+    title: 'Session Security & Inactivity Safeguards',
+    badge: 'Security Controls',
+    badgeColor: 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800',
+    icon: <Clock className="w-6 h-6 text-rose-600" />,
+    summary: 'Strict session management prevents unauthorized administrative access.',
+    bulletPoints: [
+      'Administrator sessions automatically terminate after 30 minutes of inactivity.',
+      'A 2-minute countdown banner warns you when a session is about to expire, with a 1-click "Stay Signed In" button.',
+      'Local tokens are securely purged on sign out (scope: local) to prevent 403 authorization conflicts.'
+    ],
+    proTip: 'The 30-minute session limit helps meet SOC2, HIPAA, and GDPR recruitment data security standards.'
   }
 ];
 
@@ -167,7 +232,13 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
   initialMode = 'manual'
 }) => {
   const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'admin';
+
   const [mode, setMode] = useState<'tour' | 'manual'>(initialMode);
+  // Allow admins to preview the customer tour or view admin tour
+  const [selectedTourRole, setSelectedTourRole] = useState<'customer' | 'admin'>(
+    isAdmin ? 'admin' : 'customer'
+  );
   const [tourIndex, setTourIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeManualTab, setActiveManualTab] = useState<'all' | 'customer' | 'admin' | 'ai' | 'security'>('all');
@@ -176,20 +247,26 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
+      setSelectedTourRole(isAdmin ? 'admin' : 'customer');
       setTourIndex(0);
       setSearchQuery('');
     }
-  }, [isOpen, initialMode]);
+  }, [isOpen, initialMode, isAdmin]);
+
+  const activeSteps = selectedTourRole === 'admin' ? ADMIN_TOUR_STEPS : CUSTOMER_TOUR_STEPS;
+  const currentStep = activeSteps[tourIndex] || activeSteps[0];
 
   const handleFinishTour = () => {
-    if (dontShowAgain) {
-      localStorage.setItem(STORAGE_KEY_TOUR_COMPLETED, 'true');
+    if (dontShowAgain && currentUser?.role) {
+      const storageKey = `mini_ats_tour_completed_${currentUser.role}`;
+      localStorage.setItem(storageKey, 'true');
+      localStorage.setItem('mini_ats_tour_completed', 'true');
     }
     onClose();
   };
 
   const handleNextStep = () => {
-    if (tourIndex < TOUR_STEPS.length - 1) {
+    if (tourIndex < activeSteps.length - 1) {
       setTourIndex(tourIndex + 1);
     } else {
       handleFinishTour();
@@ -239,7 +316,7 @@ Add applicants with complete profile details, links, and uploaded CV documents:
         content: `
 Mini ATS features automated resume screening:
 1. **Match Score (0–100%)**: Evaluates candidate experience, technical skills, and educational qualifications against job requirements.
-2. **Strengths & Gaps**: Pinpoints exact candidate proficiencies (e.g., 'Direct Supabase expertise') and flag missing requirements (e.g., 'Check AWS experience').
+2. **Strengths & Gaps**: Pinpoints exact candidate proficiencies (e.g., 'Direct Supabase expertise') and flags missing requirements (e.g., 'Check AWS experience').
 3. **Stage Recommendation**: The AI suggests whether to advance candidate to Screening, Technical Interview, or Offer.
 4. **Triggering**: Click 'Run AI Screening' inside any candidate drawer to re-evaluate on demand.
         `
@@ -337,8 +414,6 @@ Switch anytime using the sun/moon/sparkles control in the top-right header.
 
   if (!isOpen) return null;
 
-  const currentStep = TOUR_STEPS[tourIndex];
-
   return (
     <div 
       className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
@@ -351,20 +426,28 @@ Switch anytime using the sun/moon/sparkles control in the top-right header.
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/60 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-xs">
+            <div className={`p-2 rounded-xl shadow-xs text-white ${selectedTourRole === 'admin' ? 'bg-purple-600' : 'bg-indigo-600'}`}>
               {mode === 'tour' ? <Compass className="w-5 h-5" /> : <BookOpen className="w-5 h-5" />}
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-black text-slate-900 dark:text-white">
-                  {mode === 'tour' ? 'Interactive Platform Tour' : 'Mini ATS User Manual & Guide'}
+                  {mode === 'tour' 
+                    ? selectedTourRole === 'admin' ? 'Administrator Guided Tour' : 'Customer Hiring Guide'
+                    : 'Mini ATS User Manual & Reference'}
                 </h2>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-                  {currentUser?.role === 'admin' ? 'Admin Access' : 'Customer Access'}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  selectedTourRole === 'admin'
+                    ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                    : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
+                }`}>
+                  {selectedTourRole === 'admin' ? 'Admin Tour' : 'Customer Tour'}
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {mode === 'tour' ? 'Step-by-step walkthrough of platform capabilities' : 'Complete reference manual for all features and workflows'}
+                {mode === 'tour' 
+                  ? `Customized walkthrough for ${selectedTourRole === 'admin' ? 'System Administrators' : 'Hiring Customer Organizations'}`
+                  : 'Complete reference manual for all features and workflows'}
               </p>
             </div>
           </div>
@@ -411,21 +494,62 @@ Switch anytime using the sun/moon/sparkles control in the top-right header.
         {mode === 'tour' ? (
           <div className="p-6 overflow-y-auto flex-1 flex flex-col justify-between space-y-6">
             <div>
+              {/* Role Toggle for Admins to preview customer tour */}
+              {isAdmin && (
+                <div className="mb-4 p-2 bg-slate-100 dark:bg-slate-800/80 rounded-xl flex items-center justify-between text-xs">
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 pl-1">
+                    Select Tour Perspective:
+                  </span>
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedTourRole('admin');
+                        setTourIndex(0);
+                      }}
+                      className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                        selectedTourRole === 'admin'
+                          ? 'bg-purple-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      Admin Tour ({ADMIN_TOUR_STEPS.length} Steps)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedTourRole('customer');
+                        setTourIndex(0);
+                      }}
+                      className={`px-2.5 py-1 rounded-lg font-bold transition-all ${
+                        selectedTourRole === 'customer'
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      }`}
+                    >
+                      Customer Tour ({CUSTOMER_TOUR_STEPS.length} Steps)
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Progress dots & counter */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${currentStep.badgeColor}`}>
                   {currentStep.badge}
                 </span>
                 <span className="text-xs font-semibold text-slate-400">
-                  Step {tourIndex + 1} of {TOUR_STEPS.length}
+                  Step {tourIndex + 1} of {activeSteps.length}
                 </span>
               </div>
 
               {/* Progress bar */}
               <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mb-6 overflow-hidden">
                 <div 
-                  className="bg-indigo-600 h-full rounded-full transition-all duration-300"
-                  style={{ width: `${((tourIndex + 1) / TOUR_STEPS.length) * 100}%` }}
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    selectedTourRole === 'admin' ? 'bg-purple-600' : 'bg-indigo-600'
+                  }`}
+                  style={{ width: `${((tourIndex + 1) / activeSteps.length) * 100}%` }}
                 />
               </div>
 
@@ -448,7 +572,7 @@ Switch anytime using the sun/moon/sparkles control in the top-right header.
                 {/* Key Bullet points */}
                 <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200/80 dark:border-slate-700/80 space-y-2.5">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
-                    How it works:
+                    What you can do:
                   </span>
                   {currentStep.bulletPoints.map((pt, idx) => (
                     <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-700 dark:text-slate-200">
@@ -502,9 +626,13 @@ Switch anytime using the sun/moon/sparkles control in the top-right header.
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+                  className={`px-4 py-2 text-xs font-bold text-white rounded-xl shadow-xs transition-colors flex items-center gap-1.5 ${
+                    selectedTourRole === 'admin'
+                      ? 'bg-purple-600 hover:bg-purple-700'
+                      : 'bg-indigo-600 hover:bg-indigo-700'
+                  }`}
                 >
-                  <span>{tourIndex === TOUR_STEPS.length - 1 ? 'Finish & Explore' : 'Next Step'}</span>
+                  <span>{tourIndex === activeSteps.length - 1 ? 'Finish & Explore' : 'Next Step'}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -595,7 +723,7 @@ Switch anytime using the sun/moon/sparkles control in the top-right header.
                 className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
               >
                 <Compass className="w-3.5 h-3.5" />
-                Launch Step-by-Step Interactive Tour
+                Launch {selectedTourRole === 'admin' ? 'Administrator' : 'Customer'} Tour
               </button>
               <button
                 type="button"

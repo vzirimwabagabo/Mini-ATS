@@ -17,6 +17,12 @@ const allowedOrigins = [...new Set([
   .filter(Boolean),
 ])];
 
+const PROTECTED_SUPER_ADMIN_EMAIL = 'vzirimwabagabo0@gmail.com';
+
+function isSuperAdmin(email: string | null | undefined): boolean {
+  return (email || '').trim().toLowerCase() === PROTECTED_SUPER_ADMIN_EMAIL.toLowerCase();
+}
+
 function isOriginAllowed(origin: string | null): boolean {
   if (!origin) return true;
   if (allowedOrigins.includes(origin)) return true;
@@ -113,6 +119,9 @@ Deno.serve(async (request) => {
         .eq('id', userId)
         .single();
       if (targetProfileError || !targetProfile) return respond({ error: 'Account profile not found.' }, 404, origin);
+      if (isSuperAdmin(targetProfile.email)) {
+        return respond({ error: 'The primary super admin account (vzirimwabagabo0@gmail.com) cannot be deactivated.' }, 403, origin);
+      }
       if (targetProfile.role !== 'customer') {
         return respond({ error: 'Only customer accounts can be deactivated from this screen.' }, 409, origin);
       }
@@ -154,6 +163,10 @@ Deno.serve(async (request) => {
         .eq('id', userId)
         .single();
       if (targetProfileError || !targetProfile) return respond({ error: 'Account profile not found.' }, 404, origin);
+
+      if (isSuperAdmin(targetProfile.email) && role !== 'admin') {
+        return respond({ error: 'The primary super admin account (vzirimwabagabo0@gmail.com) cannot be demoted to customer.' }, 403, origin);
+      }
 
       if (targetProfile.role === 'admin' && role === 'customer') {
         if (userId === userData.user.id) {
@@ -211,6 +224,59 @@ Deno.serve(async (request) => {
           createdAt: updatedProfile.created_at,
         },
       }, 200, origin);
+    }
+
+    if (action === 'delete') {
+      const userId = typeof body.userId === 'string' ? body.userId : '';
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+        return respond({ error: 'Invalid user ID for deletion.' }, 400, origin);
+      }
+
+      if (userId === userData.user.id) {
+        return respond({ error: 'You cannot delete your own account while signed in.' }, 409, origin);
+      }
+
+      const { data: targetProfile, error: targetProfileError } = await serviceClient
+        .from('profiles')
+        .select('id, email, role')
+        .eq('id', userId)
+        .single();
+      if (targetProfileError || !targetProfile) {
+        return respond({ error: 'Account profile not found.' }, 404, origin);
+      }
+
+      if (isSuperAdmin(targetProfile.email)) {
+        return respond({ error: 'The primary super admin account (vzirimwabagabo0@gmail.com) is permanently protected and cannot be deleted.' }, 403, origin);
+      }
+
+      if (targetProfile.role === 'admin') {
+        const { count, error: countError } = await serviceClient
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('role', 'admin');
+        if (countError) return respond({ error: 'Could not verify the remaining admin accounts.' }, 500, origin);
+        if ((count ?? 0) <= 1) {
+          return respond({ error: 'The last admin account cannot be deleted.' }, 409, origin);
+        }
+      }
+
+      // Delete from profiles first (cascades jobs & candidates due to ON DELETE CASCADE)
+      const { error: profileDeleteError } = await serviceClient
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+      if (profileDeleteError) {
+        return respond({ error: 'Could not delete user profile from the database.' }, 500, origin);
+      }
+
+      // Delete from Supabase Auth so user cannot authenticate
+      try {
+        await serviceClient.auth.admin.deleteUser(userId);
+      } catch (authErr) {
+        console.warn('Auth user deletion warning:', authErr);
+      }
+
+      return respond({ success: true, deletedUserId: userId }, 200, origin);
     }
 
     if (action !== 'create') return respond({ error: 'Unsupported account action.' }, 400, origin);

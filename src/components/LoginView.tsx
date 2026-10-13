@@ -5,7 +5,7 @@ import { useTheme } from '../context/ThemeContext';
 import { ResetPasswordModal } from './ResetPasswordModal';
 
 export const LoginView: React.FC = () => {
-  const { login, createAccount, requestPasswordReset, isSupabaseConfigured, isPasswordRecovery, setIsPasswordRecovery } = useAuth();
+  const { login, createAccount, requestPasswordReset, isSupabaseConfigured, isPasswordRecovery, setIsPasswordRecovery, sessionTimedOut, clearSessionTimeoutAlert } = useAuth();
   const { theme, setTheme } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -266,6 +266,16 @@ export const LoginView: React.FC = () => {
                 ? 'Create your customer account' 
                 : 'Sign in with credentials'}
           </div>
+
+          {sessionTimedOut && !errorMsg && (
+            <div className="mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2 animate-in fade-in duration-200">
+              <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <div className="font-bold mb-0.5">Session Timed Out</div>
+                <span>You were automatically signed out after 30 minutes of inactivity to protect your account. Please sign in again to continue.</span>
+              </div>
+            </div>
+          )}
 
           {errorMsg && (
             <div className={`mb-4 p-3 rounded-lg border text-xs flex items-start gap-2 ${

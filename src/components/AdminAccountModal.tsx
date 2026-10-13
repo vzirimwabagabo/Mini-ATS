@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { UserProfile, UserRole } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { X, UserPlus, Shield, Building, Users, CheckCircle, Mail, Key, Pencil, Save, CircleOff, CircleCheck, Eye, EyeOff, Clock } from 'lucide-react';
+import { X, UserPlus, Shield, Building, Users, CheckCircle, Mail, Key, Pencil, Save, CircleOff, CircleCheck, Eye, EyeOff, Clock, Trash2, Lock } from 'lucide-react';
+
+const SUPER_ADMIN_EMAIL = 'vzirimwabagabo0@gmail.com';
 
 interface AdminAccountModalProps {
   isOpen: boolean;
@@ -9,7 +11,7 @@ interface AdminAccountModalProps {
 }
 
 export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, onClose }) => {
-  const { allProfiles, createAccount, updateAccount, setAccountActive, isSupabaseConfigured, refreshProfiles } = useAuth();
+  const { allProfiles, currentUser, createAccount, updateAccount, setAccountActive, deleteAccount, isSupabaseConfigured, refreshProfiles } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
@@ -72,6 +74,35 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
       );
     } catch (err: any) {
       alert(`Could not update customer status: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (profile: UserProfile) => {
+    if (profile.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+      alert('The primary super admin account (vzirimwabagabo0@gmail.com) is permanently protected and cannot be deleted.');
+      return;
+    }
+    if (profile.id === currentUser?.id) {
+      alert('You cannot delete your own account while signed in.');
+      return;
+    }
+
+    const warningText = profile.role === 'customer'
+      ? `Permanently delete ${profile.fullName} (${profile.email})?\n\nWARNING: This will delete their customer account and all associated job postings and candidate pipelines. This action cannot be undone.`
+      : `Permanently delete administrator account for ${profile.fullName} (${profile.email})?\n\nThis action cannot be undone.`;
+
+    if (!confirm(warningText)) return;
+
+    setIsSubmitting(true);
+    setSuccessMessage('');
+    try {
+      await deleteAccount(profile.id);
+      setSuccessMessage(`Account for ${profile.fullName} has been permanently deleted.`);
+      setTimeout(() => setSuccessMessage(''), 4000);
+    } catch (err: any) {
+      alert(`Could not delete account: ${err.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -387,60 +418,100 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-slate-900 dark:text-white">{p.fullName}</span>
-                    <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                        p.role === 'admin'
-                          ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
-                          : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
-                      }`}
-                    >
-                      {p.role.toUpperCase()}
+                    {currentUser?.id === p.id && (
+                      <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/50 px-1.5 py-0.2 rounded border border-purple-200 dark:border-purple-800">
+                        You
+                      </span>
+                    )}
+                    {p.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() ? (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 border-amber-300 dark:border-amber-700 flex items-center gap-1 shadow-2xs">
+                        <Shield className="w-2.5 h-2.5 text-amber-600" />
+                        SUPER ADMIN
+                      </span>
+                    ) : (
+                      <span
+                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                          p.role === 'admin'
+                            ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                            : 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
+                        }`}
+                      >
+                        {p.role.toUpperCase()}
+                      </span>
+                    )}
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                      p.isActive === false
+                        ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                        : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                    }`}>
+                      {p.isActive === false ? 'PENDING APPROVAL' : 'ACTIVE'}
                     </span>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                          p.isActive === false
-                            ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
-                            : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                        }`}>
-                          {p.isActive === false ? 'PENDING APPROVAL' : 'ACTIVE'}
-                        </span>
                   </div>
                   <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex gap-3">
                     <span>{p.email}</span>
                     {p.companyName && <span>• {p.companyName}</span>}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleEdit(p)}
-                  className="ml-3 p-2 text-slate-500 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg"
-                  title={`Edit ${p.fullName}`}
-                  aria-label={`Edit ${p.fullName}`}
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                </button>
-                {p.role === 'customer' && (
+                <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    disabled={isSubmitting}
-                    onClick={() => handleSetActive(p)}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50 ${p.isActive === false
-                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                      : 'text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40'
-                    }`}
-                    title={p.isActive === false ? 'Approve & Reactivate customer' : 'Deactivate customer'}
-                    aria-label={`${p.isActive === false ? 'Approve' : 'Deactivate'} ${p.fullName}`}
+                    onClick={() => handleEdit(p)}
+                    className="p-1.5 text-slate-500 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                    title={`Edit ${p.fullName}`}
+                    aria-label={`Edit ${p.fullName}`}
                   >
-                    {p.isActive === false
-                      ? <>
-                          <CircleCheck className="w-3.5 h-3.5" />
-                          <span>Approve</span>
-                        </>
-                      : <>
-                          <CircleOff className="w-3.5 h-3.5" />
-                          <span>Deactivate</span>
-                        </>}
+                    <Pencil className="w-3.5 h-3.5" />
                   </button>
-                )}
+                  {p.role === 'customer' && (
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => handleSetActive(p)}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50 ${p.isActive === false
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                        : 'text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40'
+                      }`}
+                      title={p.isActive === false ? 'Approve & Reactivate customer' : 'Deactivate customer'}
+                      aria-label={`${p.isActive === false ? 'Approve' : 'Deactivate'} ${p.fullName}`}
+                    >
+                      {p.isActive === false
+                        ? <>
+                            <CircleCheck className="w-3.5 h-3.5" />
+                            <span>Approve</span>
+                          </>
+                        : <>
+                            <CircleOff className="w-3.5 h-3.5" />
+                            <span>Deactivate</span>
+                          </>}
+                    </button>
+                  )}
+                  {p.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() ? (
+                    <span
+                      title="Super Admin (vzirimwabagabo0@gmail.com) is permanently protected and cannot be deleted"
+                      className="p-1.5 text-amber-600/70 dark:text-amber-400/60 cursor-not-allowed rounded-lg"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                    </span>
+                  ) : currentUser?.id === p.id ? (
+                    <span
+                      title="You cannot delete your own signed-in account"
+                      className="p-1.5 text-slate-300 dark:text-slate-600 cursor-not-allowed rounded-lg"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 opacity-40" />
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => handleDelete(p)}
+                      className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors disabled:opacity-50"
+                      title={`Delete ${p.fullName} (${p.role})`}
+                      aria-label={`Delete ${p.fullName}`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

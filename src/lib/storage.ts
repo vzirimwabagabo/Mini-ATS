@@ -750,6 +750,47 @@ export async function setAccountActiveAsAdmin(userId: string, isActive: boolean)
   return profiles[index];
 }
 
+export const PROTECTED_SUPER_ADMIN_EMAIL = 'vzirimwabagabo0@gmail.com';
+
+export async function deleteAccountAsAdmin(userId: string): Promise<void> {
+  const supabase = getSupabaseClient();
+  if (supabase) {
+    const { data, error } = await supabase.functions.invoke('admin-create-account', {
+      body: { action: 'delete', userId }
+    });
+
+    if (error) throw new Error(await getFunctionErrorMessage(error));
+    if (!data?.success) throw new Error('Account deletion failed.');
+    return;
+  }
+
+  if (!import.meta.env.DEV) throw new Error('Configure Supabase before deleting accounts.');
+
+  const profiles = getStoredProfiles();
+  const target = profiles.find((profile) => profile.id === userId);
+  if (!target) throw new Error('Account not found.');
+  if (target.email.trim().toLowerCase() === PROTECTED_SUPER_ADMIN_EMAIL.toLowerCase()) {
+    throw new Error('The primary super admin account (vzirimwabagabo0@gmail.com) is permanently protected and cannot be deleted.');
+  }
+  if (target.role === 'admin') {
+    const adminCount = profiles.filter((p) => p.role === 'admin').length;
+    if (adminCount <= 1) {
+      throw new Error('The last admin account cannot be deleted.');
+    }
+  }
+
+  const remaining = profiles.filter((profile) => profile.id !== userId);
+  localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(remaining));
+
+  if (target.role === 'customer') {
+    const jobs = getStoredJobs().filter((j) => j.customerId !== userId);
+    localStorage.setItem(STORAGE_KEY_JOBS, JSON.stringify(jobs));
+
+    const candidates = getStoredCandidates().filter((c) => c.customerId !== userId);
+    localStorage.setItem(STORAGE_KEY_CANDIDATES, JSON.stringify(candidates));
+  }
+}
+
 export async function createNewAccount(
   email: string,
   _password: string,

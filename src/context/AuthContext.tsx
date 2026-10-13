@@ -1,7 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, UserRole } from '../types';
-import { createAccountAsAdmin, createNewAccount, fetchAllProfiles, getStoredProfiles, initLocalStorageIfEmpty, setAccountActiveAsAdmin, updateAccountAsAdmin } from '../lib/storage';
+import { createAccountAsAdmin, createNewAccount, deleteAccountAsAdmin, fetchAllProfiles, getStoredProfiles, initLocalStorageIfEmpty, setAccountActiveAsAdmin, updateAccountAsAdmin } from '../lib/storage';
 import { getSupabaseClient, getSupabaseConfig } from '../lib/supabase';
+
+const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes inactivity limit
+const SESSION_WARNING_MS = 2 * 60 * 1000; // 2 minutes warning before expiration
+const AUTH_LAST_ACTIVITY_KEY = 'mini_ats_last_activity';
 
 interface AuthContextType {
   currentUser: UserProfile | null;
@@ -16,12 +20,17 @@ interface AuthContextType {
   createAccount: (email: string, password: string, fullName: string, role: UserRole, companyName?: string) => Promise<UserProfile>;
   updateAccount: (userId: string, fullName: string, role: UserRole, companyName?: string) => Promise<UserProfile>;
   setAccountActive: (userId: string, isActive: boolean) => Promise<UserProfile>;
+  deleteAccount: (userId: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   updatePassword: (newPassword: string) => Promise<void>;
   isPasswordRecovery: boolean;
   setIsPasswordRecovery: (isRecovery: boolean) => void;
   refreshProfiles: () => Promise<void>;
   switchUserRoleDemo: (role: UserRole) => void;
+  sessionTimedOut: boolean;
+  clearSessionTimeoutAlert: () => void;
+  sessionWarningOpen: boolean;
+  stayLoggedIn: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,6 +44,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSupabaseConfigured, setIsSupabaseConfigured] = useState<boolean>(false);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState<boolean>(false);
+  const [sessionTimedOut, setSessionTimedOut] = useState<boolean>(false);
+  const [sessionWarningOpen, setSessionWarningOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const { isConfigured } = getSupabaseConfig();
@@ -42,25 +53,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const initAuth = async () => {
       try {
+        const lastActStr = localStorage.getItem(AUTH_LAST_ACTIVITY_KEY);
+        const storedLastActivity = lastActStr ? Number(lastActStr) : 0;
+        const isSessionExpired = storedLastActivity > 0 && (Date.now() - storedLastActivity > INACTIVITY_TIMEOUT_MS);
+
         if (!isConfigured && import.meta.env.DEV) {
           initLocalStorageIfEmpty();
           const storedUser = localStorage.getItem(AUTH_USER_KEY);
           if (storedUser) {
-            try {
-              setCurrentUser(JSON.parse(storedUser));
-            } catch {
+            if (isSessionExpired) {
               localStorage.removeItem(AUTH_USER_KEY);
+              localStorage.removeItem(AUTH_LAST_ACTIVITY_KEY);
+              setSessionTimedOut(true);
+            } else {
+              try {
+                setCurrentUser(JSON.parse(storedUser));
+                localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, Date.now().toString());
+              } catch {
+                localStorage.removeItem(AUTH_USER_KEY);
+              }
             }
           }
 
           const profiles = await fetchAllProfiles();
           setAllProfiles(profiles);
 
-          if (!storedUser) {
+          if (!storedUser && !isSessionExpired) {
             const defaultAdmin = profiles.find(p => p.role === 'admin') || profiles[0];
             if (defaultAdmin) {
               setCurrentUser(defaultAdmin);
               localStorage.setItem(AUTH_USER_KEY, JSON.stringify(defaultAdmin));
+              localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, Date.now().toString());
             }
           }
           return;
@@ -84,6 +107,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           const { data } = await supabase.auth.getSession();
           if (data?.session?.user) {
+            if (isSessionExpired) {
+              await supabase.auth.signOut({ scope: 'local' });
+              localStorage.removeItem(AUTH_USER_KEY);
+              localStorage.removeItem(AUTH_LAST_ACTIVITY_KEY);
+              setSessionTimedOut(true);
+              return;
+            }
+
             const { data: profile } = await supabase
               .from('profiles')
               .select('*')
@@ -100,6 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 createdAt: profile.created_at
               };
               setCurrentUser(u);
+              localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, Date.now().toString());
               if (profile.role === 'admin') {
                 const profiles = await fetchAllProfiles();
                 setAllProfiles(profiles);
@@ -136,6 +168,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
   }, []);
+
+  // Monitor user activity and auto-logout on 30 minutes of inactivity
+  useEffect(() => {
+    if (!currentUser) return;
+
+    let lastRecorded = Date.now();
+    localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, lastRecorded.toString());
+
+    const onUserActivity = () => {
+      const now = Date.now();
+      if (now - lastRecorded > 15000) {
+        lastRecorded = now;
+        localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, now.toString());
+      }
+      setSessionWarningOpen(false);
+    };
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach((evt) => window.addEventListener(evt, onUserActivity, { passive: true }));
+
+    const checkInterval = setInterval(() => {
+      const last = Number(localStorage.getItem(AUTH_LAST_ACTIVITY_KEY) || Date.now());
+      const idleTime = Date.now() - last;
+
+      if (idleTime >= INACTIVITY_TIMEOUT_MS) {
+        logout();
+        setSessionTimedOut(true);
+        setSessionWarningOpen(false);
+      } else if (idleTime >= INACTIVITY_TIMEOUT_MS - SESSION_WARNING_MS) {
+        setSessionWarningOpen(true);
+      } else {
+        setSessionWarningOpen(false);
+      }
+    }, 15000);
+
+    return () => {
+      events.forEach((evt) => window.removeEventListener(evt, onUserActivity));
+      clearInterval(checkInterval);
+    };
+  }, [currentUser]);
 
   const refreshProfiles = async () => {
     const profiles = await fetchAllProfiles();
@@ -174,6 +246,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 createdAt: profile.created_at
               };
               setCurrentUser(u);
+              localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, Date.now().toString());
+              setSessionTimedOut(false);
+              setSessionWarningOpen(false);
               const profiles = await fetchAllProfiles();
               setAllProfiles(profiles);
               setImpersonatedCustomer(null);
@@ -198,6 +273,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (match) {
         setCurrentUser(match);
         localStorage.setItem(AUTH_USER_KEY, JSON.stringify(match));
+        localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, Date.now().toString());
+        setSessionTimedOut(false);
+        setSessionWarningOpen(false);
         setImpersonatedCustomer(null);
         setIsLoading(false);
         return true;
@@ -213,6 +291,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
       setCurrentUser(newAcc);
       localStorage.setItem(AUTH_USER_KEY, JSON.stringify(newAcc));
+      localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, Date.now().toString());
+      setSessionTimedOut(false);
+      setSessionWarningOpen(false);
       await refreshProfiles();
       setIsLoading(false);
       return true;
@@ -233,6 +314,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentUser(null);
     setImpersonatedCustomer(null);
     localStorage.removeItem(AUTH_USER_KEY);
+    localStorage.removeItem(AUTH_LAST_ACTIVITY_KEY);
+    setSessionWarningOpen(false);
+  };
+
+  const stayLoggedIn = () => {
+    localStorage.setItem(AUTH_LAST_ACTIVITY_KEY, Date.now().toString());
+    setSessionWarningOpen(false);
+  };
+
+  const clearSessionTimeoutAlert = () => {
+    setSessionTimedOut(false);
+  };
+
+  const deleteAccount = async (userId: string): Promise<void> => {
+    if (currentUser?.role !== 'admin') throw new Error('Only an admin can delete accounts.');
+    if (userId === currentUser?.id) throw new Error('You cannot delete your own account while signed in.');
+
+    await deleteAccountAsAdmin(userId);
+    await refreshProfiles();
+    if (impersonatedCustomer?.id === userId) {
+      setImpersonatedCustomer(null);
+    }
   };
 
   const createAccount = async (
@@ -361,12 +464,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createAccount,
         updateAccount,
         setAccountActive,
+        deleteAccount,
         requestPasswordReset,
         updatePassword,
         isPasswordRecovery,
         setIsPasswordRecovery,
         refreshProfiles,
-        switchUserRoleDemo
+        switchUserRoleDemo,
+        sessionTimedOut,
+        clearSessionTimeoutAlert,
+        sessionWarningOpen,
+        stayLoggedIn
       }}
     >
       {children}

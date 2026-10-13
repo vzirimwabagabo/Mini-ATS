@@ -26,10 +26,10 @@ import { DatabaseSetupWizardModal } from './components/DatabaseSetupWizardModal'
 import { Footer } from './components/Footer';
 import { LegalModal, LegalDocType } from './components/LegalModal';
 import { ResetPasswordModal } from './components/ResetPasswordModal';
-import { Bell, Shield } from 'lucide-react';
+import { Bell, Shield, Clock } from 'lucide-react';
 
 const ATSApp: React.FC = () => {
-  const { currentUser, effectiveUser, impersonatedCustomer, allProfiles, refreshProfiles, isPasswordRecovery, setIsPasswordRecovery } = useAuth();
+  const { currentUser, effectiveUser, impersonatedCustomer, allProfiles, refreshProfiles, isPasswordRecovery, setIsPasswordRecovery, sessionWarningOpen, stayLoggedIn } = useAuth();
 
   const [jobs, setJobs] = useState<Job[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -346,6 +346,32 @@ const ATSApp: React.FC = () => {
         isOpen={isPasswordRecovery}
         onClose={() => setIsPasswordRecovery(false)}
       />
+
+      {/* Session Inactivity Expiration Warning */}
+      {sessionWarningOpen && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm bg-white dark:bg-slate-900 border-2 border-amber-400 dark:border-amber-600 rounded-2xl shadow-2xl p-4 animate-in slide-in-from-bottom-5 duration-200">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 rounded-xl">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-slate-900 dark:text-white">Session Expiring Soon</h4>
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed">
+                You will be automatically signed out in 2 minutes due to inactivity. Click below to stay signed in.
+              </p>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={stayLoggedIn}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
+                >
+                  Stay Signed In
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

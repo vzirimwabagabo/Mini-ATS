@@ -219,3 +219,22 @@ test('Reset Demo Data is only shown when Supabase is not configured', () => {
   assert.match(resetBlock, /Reset Demo Data/);
   assert.match(resetBlock, /onResetData\(\);/);
 });
+
+test('super admin vzirimwabagabo0@gmail.com is protected from deletion, deactivation, and demotion', () => {
+  assert.match(adminFunction, /vzirimwabagabo0@gmail\.com/i);
+  assert.match(adminFunction, /action === 'delete'/);
+  assert.match(adminFunction, /You cannot delete your own account while signed in/);
+  assert.match(adminFunction, /The last admin account cannot be deleted/);
+  assert.match(adminFunction, /serviceClient\.auth\.admin\.deleteUser\(userId\)/);
+  assert.match(adminModal, /SUPER ADMIN/);
+  assert.match(adminModal, /handleDelete/);
+  assert.match(storageSource, /export async function deleteAccountAsAdmin/);
+});
+
+test('session timeout logs out users after 30 minutes of inactivity', () => {
+  assert.match(authSource, /INACTIVITY_TIMEOUT_MS\s*=\s*30\s*\*\s*60\s*\*\s*1000/);
+  assert.match(authSource, /sessionTimedOut/);
+  assert.match(loginView, /Session Timed Out/);
+  assert.match(appSource, /sessionWarningOpen/);
+  assert.match(appSource, /Session Expiring Soon/);
+});

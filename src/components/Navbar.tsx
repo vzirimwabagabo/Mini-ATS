@@ -41,6 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const { theme, setTheme, toggleTheme } = useTheme();
 
   const isAdmin = currentUser?.role === 'admin';
+  const isSuperAdmin = currentUser?.email?.trim().toLowerCase() === 'vzirimwabagabo0@gmail.com';
   const customerProfiles = allProfiles.filter((p) => p.role === 'customer');
 
   return (
@@ -117,22 +118,24 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right side actions */}
         <div className="flex items-center gap-2">
-          {/* Real Database Setup Wizard Trigger */}
-          <button
-            type="button"
-            onClick={onOpenDatabaseWizard}
-            className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-xs ${
-              isSupabaseConfigured
-                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-                : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:opacity-95'
-            }`}
-            title="Open Real Database Setup Wizard"
-          >
-            <Database className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">
-              {isSupabaseConfigured ? 'Database Live' : 'Connect Real DB'}
-            </span>
-          </button>
+          {/* Real Database Setup Wizard Trigger (Restricted to Super Admin) */}
+          {isSuperAdmin && (
+            <button
+              type="button"
+              onClick={onOpenDatabaseWizard}
+              className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-xs ${
+                isSupabaseConfigured
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                  : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:opacity-95'
+              }`}
+              title="Super Admin: Database Engine & Credentials"
+            >
+              <Database className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">
+                {isSupabaseConfigured ? 'Database Live' : 'Connect Real DB'}
+              </span>
+            </button>
+          )}
 
           {/* Admin Create Account Button with pending approvals notification */}
           {isAdmin && (

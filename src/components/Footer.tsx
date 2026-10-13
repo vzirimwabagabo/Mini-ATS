@@ -200,13 +200,15 @@ export const Footer: React.FC<FooterProps> = ({
               <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-slate-800 dark:text-slate-200">Database Engine:</span>
-                  <button
-                    type="button"
-                    onClick={onOpenDatabaseWizard}
-                    className="font-bold text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline"
-                  >
-                    Configure
-                  </button>
+                  {currentUser?.email?.trim().toLowerCase() === 'vzirimwabagabo0@gmail.com' && (
+                    <button
+                      type="button"
+                      onClick={onOpenDatabaseWizard}
+                      className="font-bold text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline"
+                    >
+                      Configure
+                    </button>
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                   <Database className="w-3 h-3 text-emerald-500" />

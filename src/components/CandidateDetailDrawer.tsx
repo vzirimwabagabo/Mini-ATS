@@ -242,9 +242,32 @@ export const CandidateDetailDrawer: React.FC<CandidateDetailDrawerProps> = ({
 
         {/* ── Pipeline Stage Changer ── */}
         <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
-          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-            Pipeline Stage
-          </label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Pipeline Stage
+            </label>
+            {ai?.recommendedStage && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                  AI Recommendation:
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold capitalize bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                  <TrendingUp className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+                  {ai.recommendedStage}
+                </span>
+                {ai.recommendedStage !== candidate.stage && (
+                  <button
+                    type="button"
+                    onClick={() => handleStageSelect(ai.recommendedStage)}
+                    className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors"
+                    title={`Advance candidate to AI recommended stage (${ai.recommendedStage})`}
+                  >
+                    Advance to {ai.recommendedStage}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-6 gap-1.5">
             {STAGES.map((s) => {
               const isActive = candidate.stage === s.id;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Candidate, CandidateStage, Job } from '../types';
-import { ExternalLink, Sparkles, ChevronRight, ChevronLeft, Trash2 } from 'lucide-react';
+import { ExternalLink, Sparkles, ChevronRight, ChevronLeft, Trash2, TrendingUp } from 'lucide-react';
 import { LinkedinIcon } from './Icons';
 import confetti from 'canvas-confetti';
 import { safeExternalUrl } from '../lib/safeExternalUrl';
@@ -95,7 +95,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
         </div>
 
         <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-700/60 text-[10px] text-slate-400">
-          <div className="flex gap-1">
+          <div className="flex items-center gap-1">
             {currentStageIndex > 0 && (
               <button
                 type="button"
@@ -114,6 +114,19 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
                 title="Next stage"
               >
                 <ChevronRight className="w-3 h-3" />
+              </button>
+            )}
+            {candidate.aiEvaluation?.recommendedStage && candidate.aiEvaluation.recommendedStage !== candidate.stage && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStageChange(candidate.id, candidate.aiEvaluation!.recommendedStage);
+                }}
+                className="text-[9px] font-bold text-purple-600 dark:text-purple-400 hover:underline capitalize"
+                title={`AI suggests: ${candidate.aiEvaluation.recommendedStage}`}
+              >
+                ➔ {candidate.aiEvaluation.recommendedStage}
               </button>
             )}
           </div>
@@ -208,7 +221,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
 
       {/* Card Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700/60 text-xs">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {currentStageIndex > 0 && (
             <button
               type="button"
@@ -223,11 +236,30 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
             <button
               type="button"
               onClick={handleNextStage}
-              className="inline-flex items-center gap-0.5 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 px-2.5 py-0.5 rounded-md transition-colors"
+              className="inline-flex items-center gap-0.5 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 px-2 py-0.5 rounded-md transition-colors"
               title="Move to next stage"
             >
               Advance
               <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {/* AI Recommended Stage Quick-Advance */}
+          {candidate.aiEvaluation?.recommendedStage && candidate.aiEvaluation.recommendedStage !== candidate.stage && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (candidate.aiEvaluation?.recommendedStage === 'hired') {
+                  confetti({ particleCount: 80, spread: 70, origin: { y: 0.7 } });
+                }
+                onStageChange(candidate.id, candidate.aiEvaluation!.recommendedStage);
+              }}
+              className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 dark:hover:bg-purple-900/60 px-2 py-0.5 rounded-md border border-purple-200 dark:border-purple-800 transition-colors shadow-2xs"
+              title={`AI recommends advancing to ${candidate.aiEvaluation.recommendedStage} — click to apply`}
+            >
+              <TrendingUp className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+              <span className="capitalize">AI: {candidate.aiEvaluation.recommendedStage}</span>
             </button>
           )}
         </div>

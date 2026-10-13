@@ -257,11 +257,15 @@ export const UserManualModal: React.FC<UserManualModalProps> = ({
   const currentStep = activeSteps[tourIndex] || activeSteps[0];
 
   const handleFinishTour = () => {
-    if (dontShowAgain && currentUser?.role) {
-      const storageKey = `mini_ats_tour_completed_${currentUser.role}`;
-      localStorage.setItem(storageKey, 'true');
-      localStorage.setItem('mini_ats_tour_completed', 'true');
+    if (currentUser?.id) {
+      const userKey = `mini_ats_tour_completed_${currentUser.id}`;
+      localStorage.setItem(userKey, 'true');
     }
+    if (currentUser?.role) {
+      const roleKey = `mini_ats_tour_completed_${currentUser.role}`;
+      localStorage.setItem(roleKey, 'true');
+    }
+    localStorage.setItem('mini_ats_tour_completed', 'true');
     onClose();
   };
 
@@ -608,7 +612,7 @@ Switch anytime using the sun/moon/sparkles control in the top-right header.
               <div className="flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={handleFinishTour}
                   className="px-3 py-2 text-xs font-medium text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
                 >
                   Skip Tour

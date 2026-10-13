@@ -52,19 +52,41 @@ const ATSApp: React.FC = () => {
   const [legalDocType, setLegalDocType] = useState<LegalDocType>('privacy');
   const [isUserManualOpen, setIsUserManualOpen] = useState<boolean>(false);
 
-  // Auto-launch role-tailored guided tour for users who haven't completed it yet
+  // Auto-launch role-tailored guided tour ONLY for newly registered users on their first session
   useEffect(() => {
     if (currentUser) {
+      const userKey = `mini_ats_tour_completed_${currentUser.id}`;
       const roleKey = `mini_ats_tour_completed_${currentUser.role}`;
-      const tourCompleted = localStorage.getItem(roleKey) || localStorage.getItem('mini_ats_tour_completed');
-      if (!tourCompleted) {
+      const globalKey = 'mini_ats_tour_completed';
+
+      // Has the user or role already dismissed or completed the tour?
+      const alreadyCompleted = 
+        localStorage.getItem(userKey) || 
+        localStorage.getItem(roleKey) || 
+        localStorage.getItem(globalKey);
+
+      if (alreadyCompleted) return;
+
+      // Only auto-launch for users created in the last 24 hours (new users) or marked as new
+      const isNewlyCreated = currentUser.createdAt 
+        ? (Date.now() - new Date(currentUser.createdAt).getTime()) < 24 * 60 * 60 * 1000
+        : false;
+
+      // Also check if flagged during self-registration
+      const isNewRegistration = sessionStorage.getItem('mini_ats_new_user_registered') === 'true';
+
+      if (isNewlyCreated || isNewRegistration) {
         const timer = setTimeout(() => {
           setIsUserManualOpen(true);
+          sessionStorage.removeItem('mini_ats_new_user_registered');
         }, 600);
         return () => clearTimeout(timer);
+      } else {
+        // For existing established accounts, mark as completed so the popup never interrupts them
+        localStorage.setItem(userKey, 'true');
       }
     }
-  }, [currentUser?.id, currentUser?.role]);
+  }, [currentUser?.id, currentUser?.role, currentUser?.createdAt]);
 
   // Load data whenever effectiveUser changes
   useEffect(() => {

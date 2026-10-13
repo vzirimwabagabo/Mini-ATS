@@ -57,7 +57,7 @@ const CUSTOMER_TOUR_STEPS: TourStep[] = [
       'Access real-time visual hiring boards and automated candidate scoring.',
       'Customize your display with Light, Dark, or Midnight colorful themes in the header.'
     ],
-    proTip: 'Everything you create is saved in real-time, whether operating against cloud Supabase or local offline storage.'
+    proTip: 'Everything you create is saved in real-time directly to your live cloud Supabase database with PostgreSQL Row Level Security.'
   },
   {
     title: 'Posting & Managing Job Openings',

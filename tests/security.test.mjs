@@ -238,3 +238,12 @@ test('session timeout logs out users after 30 minutes of inactivity', () => {
   assert.match(appSource, /sessionWarningOpen/);
   assert.match(appSource, /Session Expiring Soon/);
 });
+
+test('customer company names are enforced unique across schema, edge function, and storage', () => {
+  assert.match(schema, /idx_unique_customer_company_name/);
+  assert.match(schema, /LOWER\(TRIM\(company_name\)\)/);
+  assert.match(adminFunction, /existingCompanyProfile/);
+  assert.match(adminFunction, /already registered by another customer account/);
+  assert.match(storageSource, /Each organization may only be registered once/);
+  assert.match(adminModal, /Each customer company must be unique/);
+});

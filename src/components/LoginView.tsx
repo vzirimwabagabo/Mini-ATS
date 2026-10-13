@@ -66,9 +66,14 @@ export const LoginView: React.FC = () => {
           setLoading(false);
           return;
         }
+        if (!companyName.trim()) {
+          setErrorMsg('Company / Organization Name is required.');
+          setLoading(false);
+          return;
+        }
         const cleanEmail = email.trim();
         const cleanName = fullName.trim() || email.split('@')[0];
-        const cleanCompany = companyName.trim() || 'My Company';
+        const cleanCompany = companyName.trim();
         await createAccount(
           cleanEmail,
           password,

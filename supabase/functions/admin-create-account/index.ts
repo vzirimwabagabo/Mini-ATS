@@ -198,6 +198,21 @@ Deno.serve(async (request) => {
         }
       }
 
+      if (role === 'customer' && companyName) {
+        const { data: existingCompanyProfile } = await serviceClient
+          .from('profiles')
+          .select('id, email, company_name')
+          .eq('role', 'customer')
+          .neq('id', userId)
+          .ilike('company_name', companyName.trim())
+          .limit(1)
+          .maybeSingle();
+
+        if (existingCompanyProfile) {
+          return respond({ error: `The company name "${companyName.trim()}" is already registered by another customer account.` }, 409, origin);
+        }
+      }
+
       const { data: updatedProfile, error: updateError } = await serviceClient
         .from('profiles')
         .update({ role, full_name: fullName, company_name: companyName || null })
@@ -210,7 +225,7 @@ Deno.serve(async (request) => {
             user_metadata: previousMetadata,
           });
         }
-        return respond({ error: 'Could not update the account profile.' }, 500, origin);
+        return respond({ error: 'Could not update the account profile. Make sure the company name is unique.' }, 500, origin);
       }
 
       return respond({
@@ -290,6 +305,20 @@ Deno.serve(async (request) => {
       (role !== 'admin' && role !== 'customer')
     ) {
       return respond({ error: 'Invalid account details. Check field lengths and password requirements.' }, 400, origin);
+    }
+
+    if (role === 'customer' && companyName) {
+      const { data: existingCompanyProfile } = await serviceClient
+        .from('profiles')
+        .select('id, email, company_name')
+        .eq('role', 'customer')
+        .ilike('company_name', companyName.trim())
+        .limit(1)
+        .maybeSingle();
+
+      if (existingCompanyProfile) {
+        return respond({ error: `The company name "${companyName.trim()}" is already registered by another customer account.` }, 409, origin);
+      }
     }
 
     const { data: created, error: createError } = await serviceClient.auth.admin.createUser({

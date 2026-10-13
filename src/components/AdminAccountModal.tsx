@@ -112,6 +112,24 @@ export const AdminAccountModal: React.FC<AdminAccountModalProps> = ({ isOpen, on
     e.preventDefault();
     if (!fullName.trim() || (!editingProfile && (!email.trim() || !password))) return;
 
+    if (role === 'customer' && !companyName.trim()) {
+      alert('Company name is required for customer accounts.');
+      return;
+    }
+
+    if (role === 'customer') {
+      const trimmedTarget = companyName.trim().toLowerCase();
+      const duplicateCompany = allProfiles.find(
+        (p) => p.role === 'customer' &&
+               p.companyName?.trim().toLowerCase() === trimmedTarget &&
+               p.id !== editingProfile?.id
+      );
+      if (duplicateCompany) {
+        alert(`The company name "${companyName.trim()}" is already registered (${duplicateCompany.email}). Each customer company must be unique.`);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     setSuccessMessage('');
     try {

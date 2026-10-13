@@ -802,6 +802,21 @@ export async function createNewAccount(
   const now = new Date().toISOString();
 
   if (supabase) {
+    if (role === 'customer' && companyName?.trim()) {
+      const cleanCompany = companyName.trim();
+      const { data: existingCompany } = await supabase
+        .from('profiles')
+        .select('id, company_name')
+        .eq('role', 'customer')
+        .ilike('company_name', cleanCompany)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingCompany) {
+        throw new Error(`The company name "${cleanCompany}" is already registered. Each organization may only be registered once.`);
+      }
+    }
+
     const { data: authData, error: authErr } = await supabase.auth.signUp({
       email,
       password: _password,
@@ -820,8 +835,11 @@ export async function createNewAccount(
       if ((authErr as any).status === 400 && authErr.message?.toLowerCase().includes('password')) {
         throw new Error('Password does not meet requirements. Please enter at least 6 characters.');
       }
+      if (authErr.message?.toLowerCase().includes('already registered') || authErr.message?.toLowerCase().includes('unique_violation')) {
+        throw new Error(authErr.message);
+      }
       if (authErr.message?.toLowerCase().includes('database error saving new user')) {
-        throw new Error('Database trigger error: Please verify the latest SQL migrations (profiles table and on_auth_user_created trigger) are applied in your Supabase project.');
+        throw new Error('Database error saving new user: Check whether the company name or email is already registered.');
       }
       throw new Error(authErr.message || 'Cloud account creation failed. Verify the email and password requirements, then try again.');
     }
@@ -852,12 +870,23 @@ export async function createNewAccount(
 
   // Local storage creation
   const profiles = getStoredProfiles();
+  const cleanCompanyName = companyName?.trim() || (role === 'admin' ? 'Mini ATS Admin' : 'Hiring Company');
+
+  if (role === 'customer') {
+    const duplicate = profiles.find(
+      (p) => p.role === 'customer' && p.companyName?.trim().toLowerCase() === cleanCompanyName.toLowerCase()
+    );
+    if (duplicate) {
+      throw new Error(`The company name "${cleanCompanyName}" is already registered. Each organization may only be registered once.`);
+    }
+  }
+
   const newProfile: UserProfile = {
     id: 'user-' + Date.now(),
     email: email.trim().toLowerCase(),
     role,
     fullName: fullName.trim(),
-    companyName: companyName?.trim() || (role === 'admin' ? 'Mini ATS Admin' : 'Hiring Company'),
+    companyName: cleanCompanyName,
     createdAt: now
   };
 

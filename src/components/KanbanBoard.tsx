@@ -10,7 +10,10 @@ import {
   Briefcase, 
   X,
   Shrink,
-  Maximize2
+  Maximize2,
+  Trophy,
+  ArrowDownNarrowWide,
+  Sparkles
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -84,10 +87,41 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [compactMode, setCompactMode] = useState<boolean>(true);
   const [autoShrink, setAutoShrink] = useState<boolean>(true);
+  const [sortBy, setSortBy] = useState<'ai-rank' | 'recent' | 'name'>('ai-rank');
   const [manuallyExpanded, setManuallyExpanded] = useState<Record<string, boolean>>({});
   const [draggingOverStage, setDraggingOverStage] = useState<CandidateStage | null>(null);
 
-  // Filter candidates according to user criteria: Job and Candidate Name (or email)
+  // Precompute candidate ranks within each specific job opening based on AI fit score
+  // Candidates with equal scores or un-evaluated are sorted stably
+  const rankMap = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    const candidatesByJob: Record<string, Candidate[]> = {};
+
+    candidates.forEach((cand) => {
+      if (!cand.jobId) return;
+      if (!candidatesByJob[cand.jobId]) candidatesByJob[cand.jobId] = [];
+      candidatesByJob[cand.jobId].push(cand);
+    });
+
+    Object.values(candidatesByJob).forEach((jobCands) => {
+      // Sort candidates by AI evaluation score descending, then by creation date
+      const sorted = [...jobCands].sort((a, b) => {
+        const scoreA = a.aiEvaluation?.score ?? -1;
+        const scoreB = b.aiEvaluation?.score ?? -1;
+        if (scoreB !== scoreA) return scoreB - scoreA;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+
+      sorted.forEach((cand, idx) => {
+        // Only assign numerical rank if there are multiple candidates or candidate has been evaluated
+        map[cand.id] = idx + 1;
+      });
+    });
+
+    return map;
+  }, [candidates]);
+
+  // Filter and sort candidates according to user criteria
   const filteredCandidates = candidates.filter((cand) => {
     // 1. Job filter
     if (selectedJobId !== 'all' && cand.jobId !== selectedJobId) {
@@ -106,6 +140,18 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
 
     return true;
+  }).sort((a, b) => {
+    if (sortBy === 'ai-rank') {
+      const scoreA = a.aiEvaluation?.score ?? -1;
+      const scoreB = b.aiEvaluation?.score ?? -1;
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    if (sortBy === 'name') {
+      return a.name.localeCompare(b.name);
+    }
+    // recent
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   // Drag & drop handlers
@@ -189,8 +235,24 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
         </div>
 
-        {/* Right Side: View Controls, Auto-Shrink Toggle, & Quick Actions */}
+        {/* Right Side: Sorting, Auto-Shrink, Compact Toggle, & Quick Actions */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Candidate Ranking & Sorting Selector */}
+          <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200">
+            <Trophy className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline">Rank:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="bg-transparent text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
+              title="Change candidate ranking and display order"
+            >
+              <option value="ai-rank">AI Fit Score (Ranked)</option>
+              <option value="recent">Most Recent</option>
+              <option value="name">Alphabetical (A-Z)</option>
+            </select>
+          </div>
+
           {/* Auto-Shrink Empty Columns Toggle */}
           <button
             type="button"
@@ -435,6 +497,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           candidate={cand}
                           job={candJob}
                           compactMode={compactMode}
+                          rankPosition={rankMap[cand.id]}
                           onOpenDetail={onOpenCandidateDetail}
                           onStageChange={onStageChange}
                           onDelete={onDeleteCandidate}

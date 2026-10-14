@@ -9,6 +9,7 @@ interface CandidateCardProps {
   candidate: Candidate;
   job?: Job;
   compactMode: boolean;
+  rankPosition?: number;
   onOpenDetail: (candidate: Candidate) => void;
   onStageChange: (candidateId: string, newStage: CandidateStage) => void;
   onDelete: (candidateId: string) => void;
@@ -20,6 +21,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
   candidate,
   job,
   compactMode,
+  rankPosition,
   onOpenDetail,
   onStageChange,
   onDelete
@@ -68,9 +70,27 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
         className="group relative bg-white dark:bg-slate-800/90 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-indigo-500 hover:shadow-md transition-all cursor-pointer flex flex-col gap-1.5"
       >
         <div className="flex items-center justify-between">
-          <span className="font-bold text-xs text-slate-900 dark:text-white truncate max-w-[140px]" title={candidate.name}>
-            {candidate.name}
-          </span>
+          <div className="flex items-center gap-1.5 truncate max-w-[150px]">
+            {rankPosition !== undefined && (
+              <span 
+                className={`text-[9px] font-black px-1.5 py-0.5 rounded-md shrink-0 border ${
+                  rankPosition === 1
+                    ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-700 shadow-2xs'
+                    : rankPosition === 2
+                    ? 'bg-slate-200 text-slate-800 border-slate-300 dark:bg-slate-700 dark:text-slate-200'
+                    : rankPosition === 3
+                    ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400'
+                    : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                }`}
+                title={`Rank #${rankPosition} for this job`}
+              >
+                #{rankPosition}
+              </span>
+            )}
+            <span className="font-bold text-xs text-slate-900 dark:text-white truncate" title={candidate.name}>
+              {candidate.name}
+            </span>
+          </div>
           {score !== undefined && (
             <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md border ${scoreColor}`}>
               {score}%
@@ -156,9 +176,27 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
     >
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h4 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-            {candidate.name}
-          </h4>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {rankPosition !== undefined && (
+              <span 
+                className={`text-[10px] font-black px-1.5 py-0.5 rounded-md border ${
+                  rankPosition === 1
+                    ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-700 shadow-2xs'
+                    : rankPosition === 2
+                    ? 'bg-slate-200 text-slate-800 border-slate-300 dark:bg-slate-700 dark:text-slate-200'
+                    : rankPosition === 3
+                    ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400'
+                    : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                }`}
+                title={`Rank #${rankPosition} for this job`}
+              >
+                #{rankPosition}
+              </span>
+            )}
+            <h4 className="font-bold text-sm text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              {candidate.name}
+            </h4>
+          </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[170px] mt-0.5 font-medium">
             {job?.title || 'Unassigned Job'}
           </p>

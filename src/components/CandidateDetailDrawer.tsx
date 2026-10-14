@@ -5,7 +5,7 @@ import {
   X, ExternalLink, Mail, Phone, Sparkles, CheckCircle2, AlertCircle,
   TrendingUp, FileText, Save, Check, HelpCircle, Send, Copy,
   Layers, ShieldAlert, Star, MessageSquareWarning, Target,
-  Loader2, BookOpen, Zap,
+  Loader2, BookOpen, Zap, Trophy,
 } from 'lucide-react';
 import { LinkedinIcon } from './Icons';
 import confetti from 'canvas-confetti';
@@ -14,6 +14,7 @@ import { safeExternalUrl } from '../lib/safeExternalUrl';
 interface CandidateDetailDrawerProps {
   candidate: Candidate | null;
   jobs: Job[];
+  allCandidates?: Candidate[];
   onClose: () => void;
   onEditCandidate: (candidate: Candidate) => void;
   onUpdateCandidate: (candidate: Candidate) => Promise<void> | void;
@@ -108,6 +109,7 @@ const ScoreBar: React.FC<{
 export const CandidateDetailDrawer: React.FC<CandidateDetailDrawerProps> = ({
   candidate,
   jobs,
+  allCandidates = [],
   onClose,
   onEditCandidate,
   onUpdateCandidate,
@@ -123,6 +125,17 @@ export const CandidateDetailDrawer: React.FC<CandidateDetailDrawerProps> = ({
   const currentJob = jobs.find((j) => j.id === candidate.jobId);
   const linkedinUrl = safeExternalUrl(candidate.linkedinUrl);
   const portfolioUrl = safeExternalUrl(candidate.portfolioUrl);
+
+  // Compute rank position among all applicants for this specific job
+  const jobCandidates = allCandidates.filter((c) => c.jobId === candidate.jobId);
+  const sortedJobCandidates = [...jobCandidates].sort((a, b) => {
+    const scoreA = a.aiEvaluation?.score ?? -1;
+    const scoreB = b.aiEvaluation?.score ?? -1;
+    if (scoreB !== scoreA) return scoreB - scoreA;
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  });
+  const candidateRankIndex = sortedJobCandidates.findIndex((c) => c.id === candidate.id);
+  const rankPosition = candidateRankIndex !== -1 ? candidateRankIndex + 1 : undefined;
 
   const ai = candidate.aiEvaluation;
   const tier = ai?.tier;
@@ -183,6 +196,24 @@ export const CandidateDetailDrawer: React.FC<CandidateDetailDrawerProps> = ({
               <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
                 {candidate.name}
               </h2>
+              {/* Job Candidate Rank Badge */}
+              {rankPosition !== undefined && jobCandidates.length > 0 && (
+                <span 
+                  className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                    rankPosition === 1
+                      ? 'bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/70 dark:text-amber-300 dark:border-amber-700 shadow-2xs'
+                      : rankPosition === 2
+                      ? 'bg-slate-200 text-slate-800 border-slate-300 dark:bg-slate-700 dark:text-slate-200'
+                      : rankPosition === 3
+                      ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400'
+                      : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400'
+                  }`}
+                  title={`Ranked #${rankPosition} among ${jobCandidates.length} applicants for this job`}
+                >
+                  <Trophy className="w-3 h-3 text-amber-500 shrink-0" />
+                  Rank #{rankPosition} of {jobCandidates.length}
+                </span>
+              )}
               {/* Overall score badge */}
               {ai && (
                 <span

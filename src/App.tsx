@@ -296,6 +296,7 @@ const ATSApp: React.FC = () => {
       <CandidateDetailDrawer
         key={selectedCandidateForDrawer?.id || 'no-candidate'}
         candidate={selectedCandidateForDrawer}
+        allCandidates={candidates}
         jobs={jobs}
         onClose={() => setSelectedCandidateForDrawer(null)}
         onEditCandidate={(candidate) => {

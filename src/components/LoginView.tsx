@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Shield, User, Lock, Mail, ArrowRight, Sparkles, Building, CheckCircle2, Eye, EyeOff, Zap, Sun, Moon, Clock, AlertCircle, CheckCircle } from 'lucide-react';
+import { Shield, User, Lock, Mail, ArrowRight, Sparkles, Building, CheckCircle2, Eye, EyeOff, Zap, Sun, Moon, Clock, AlertCircle, CheckCircle, Trophy, TrendingUp, Award, Layers } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ResetPasswordModal } from './ResetPasswordModal';
 
@@ -102,8 +102,12 @@ export const LoginView: React.FC = () => {
   };
 
   return (
-    <div className="login-screen min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 px-4 relative">
-      <div className="absolute top-4 right-4 flex items-center gap-1 p-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 shadow-sm" aria-label="Color theme">
+    <div className="login-screen min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Background Ambient Glows */}
+      <div className="absolute -top-32 -left-32 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-1 p-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90 shadow-sm" aria-label="Color theme">
         <button
           type="button"
           onClick={() => setTheme('light')}
@@ -136,18 +140,20 @@ export const LoginView: React.FC = () => {
         </button>
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="brand-mark w-12 h-12 rounded-2xl mx-auto flex items-center justify-center shadow-xl mb-3">
-          <Zap className="w-6 h-6" />
-        </div>
-        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Mini ATS</h2>
-        <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
-          Fast, AI-Screened Applicant Tracking for Modern Teams
-        </p>
-      </div>
+      <div className="w-full max-w-6xl mx-auto my-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center z-10">
+        {/* Left Column: Form & Quick Access (lg:col-span-5) */}
+        <div className="w-full max-w-md mx-auto lg:max-w-none lg:col-span-5">
+          <div className="text-center mb-6">
+            <div className="brand-mark w-12 h-12 rounded-2xl mx-auto flex items-center justify-center shadow-xl mb-3">
+              <Zap className="w-6 h-6" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Mini ATS</h2>
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+              Fast, AI-Screened Applicant Tracking for Modern Teams
+            </p>
+          </div>
 
-      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md py-8 px-6 sm:px-8 shadow-2xl rounded-2xl border border-slate-200 dark:border-slate-800 transition-colors">
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md py-8 px-6 sm:px-8 shadow-2xl rounded-2xl border border-slate-200 dark:border-slate-800 transition-colors">
           {/* Local role simulation is only available in development without Supabase. */}
           {!isSupabaseConfigured && import.meta.env.DEV && <div className="mb-6 p-4 rounded-xl bg-gradient-to-br from-slate-50 to-indigo-50/50 dark:from-slate-800/60 dark:to-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50">
             <div className="flex items-center justify-between mb-2">
@@ -475,7 +481,148 @@ export const LoginView: React.FC = () => {
           </>
           )}
         </div>
+        </div>
+
+        {/* Right Column: High-Impact Product & AI Intelligence Showcase (lg:col-span-7) */}
+        <div className="hidden lg:flex flex-col justify-center space-y-6 lg:col-span-7 pl-2 xl:pl-6">
+          {/* Header pill & ATS Emblem */}
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-indigo-800 flex items-center justify-center shadow-xl shadow-indigo-500/20 ring-1 ring-white/20">
+              <svg viewBox="0 0 100 100" className="w-8 h-8 text-white fill-current">
+                <ellipse cx="50" cy="50" rx="42" ry="24" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="170 30" />
+                <text x="50" y="56" textAnchor="middle" fontWeight="900" fontSize="20" letterSpacing="1.5" fill="currentColor">ATS</text>
+                <path d="M 32 68 L 38 68 M 42 68 L 48 68 M 52 68 L 58 68 M 62 68 L 68 68" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-400/25">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                Live Candidate Intelligence
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <h1 className="text-3xl xl:text-4xl font-black text-white tracking-tight leading-tight">
+              Hire the top 1% with{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-300">
+                AI-screened precision
+              </span>.
+            </h1>
+            <p className="mt-2 text-sm text-slate-300 leading-relaxed max-w-xl">
+              Real-time resume ingestion, multi-dimensional candidate evaluation, calibrated stage recommendations, and high-velocity Kanban pipelines.
+            </p>
+          </div>
+
+          {/* Floating Live Product Mockup Card (Maya Lin - Rank #1) */}
+          <div className="relative rounded-2xl p-5 bg-slate-900/80 backdrop-blur-xl border border-slate-700/80 shadow-2xl shadow-indigo-950/50 space-y-4">
+            {/* Ambient card corner glow */}
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-sm shadow">
+                    ML
+                  </div>
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-slate-900" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white text-sm">Maya Lin</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400/15 text-amber-300 border border-amber-400/30">
+                      <Trophy className="w-3 h-3 text-amber-400" />
+                      #1 Rank
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-400">Senior Full Stack Engineer</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-extrabold text-xs">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                94% Match
+              </div>
+            </div>
+
+            {/* Dimensional Fit Breakdown */}
+            <div className="grid grid-cols-3 gap-2.5 pt-1">
+              <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
+                <div className="text-[10px] text-slate-400 font-medium">Technical Depth</div>
+                <div className="text-xs font-bold text-slate-200 mt-0.5">96% • Exceptional</div>
+                <div className="w-full bg-slate-700/60 rounded-full h-1 mt-1.5 overflow-hidden">
+                  <div className="bg-indigo-400 h-1 rounded-full w-[96%]" />
+                </div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
+                <div className="text-[10px] text-slate-400 font-medium">Seniority Alignment</div>
+                <div className="text-xs font-bold text-slate-200 mt-0.5">94% • Strong Match</div>
+                <div className="w-full bg-slate-700/60 rounded-full h-1 mt-1.5 overflow-hidden">
+                  <div className="bg-purple-400 h-1 rounded-full w-[94%]" />
+                </div>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
+                <div className="text-[10px] text-slate-400 font-medium">Quantified Impact</div>
+                <div className="text-xs font-bold text-slate-200 mt-0.5">92% • Metrics Driven</div>
+                <div className="w-full bg-slate-700/60 rounded-full h-1 mt-1.5 overflow-hidden">
+                  <div className="bg-emerald-400 h-1 rounded-full w-[92%]" />
+                </div>
+              </div>
+            </div>
+
+            {/* AI Recommendation Pill */}
+            <div className="flex items-center justify-between p-3 rounded-xl bg-indigo-950/60 border border-indigo-800/60 text-xs">
+              <div className="flex items-center gap-2 text-indigo-200">
+                <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0" />
+                <div>
+                  <span className="font-bold text-white">AI Stage Recommendation:</span>{' '}
+                  <span className="text-slate-300">Advance candidate to</span>{' '}
+                  <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30 uppercase text-[10px]">
+                    Offer
+                  </span>
+                </div>
+              </div>
+              <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                1-Click Advance
+              </span>
+            </div>
+
+            {/* Pipeline Stage Tracker */}
+            <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+              <div className="flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Live Pipeline Velocity</span>
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-mono">
+                <span className="text-slate-500">Sourced (14)</span>
+                <span>→</span>
+                <span className="text-slate-500">Screening (8)</span>
+                <span>→</span>
+                <span className="text-slate-500">Interview (4)</span>
+                <span>→</span>
+                <span className="text-emerald-400 font-bold">Offer (2)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Three Feature Guarantees */}
+          <div className="grid grid-cols-3 gap-3 pt-1">
+            <div className="flex items-center gap-2 text-xs text-slate-300">
+              <Shield className="w-4 h-4 text-indigo-400 shrink-0" />
+              <span>Row-Level Security (RLS)</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-300">
+              <Zap className="w-4 h-4 text-purple-400 shrink-0" />
+              <span>Dual-Engine AI Matching</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-300">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>Zero-Leakage Privacy</span>
+            </div>
+          </div>
+        </div>
       </div>
+
       <ResetPasswordModal
         isOpen={isPasswordRecovery}
         onClose={() => setIsPasswordRecovery(false)}

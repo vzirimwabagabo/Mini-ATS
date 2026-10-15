@@ -14,6 +14,7 @@ import {
   Bell,
   BookOpen
 } from 'lucide-react';
+import { AtsLogo } from './AtsLogo';
 
 interface NavbarProps {
   onOpenCreateAccount: () => void;
@@ -71,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Brand & Logo */}
         <div className="flex items-center gap-3">
           <div className="brand-mark w-9 h-9 rounded-xl flex items-center justify-center shadow-md">
-            <Zap className="w-5 h-5" />
+            <AtsLogo className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">

@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Shield, User, Lock, Mail, ArrowRight, Sparkles, Building, CheckCircle2, Eye, EyeOff, Zap, Sun, Moon, Clock, AlertCircle, CheckCircle, Trophy, TrendingUp, Award, Layers } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ResetPasswordModal } from './ResetPasswordModal';
+import { AtsLogo } from './AtsLogo';
 
 export const LoginView: React.FC = () => {
   const { login, createAccount, requestPasswordReset, isSupabaseConfigured, isPasswordRecovery, setIsPasswordRecovery, sessionTimedOut, clearSessionTimeoutAlert } = useAuth();
@@ -145,7 +146,7 @@ export const LoginView: React.FC = () => {
         <div className="w-full max-w-md mx-auto lg:max-w-none lg:col-span-5">
           <div className="text-center mb-6">
             <div className="brand-mark w-12 h-12 rounded-2xl mx-auto flex items-center justify-center shadow-xl mb-3">
-              <Zap className="w-6 h-6" />
+              <AtsLogo className="w-8 h-8" />
             </div>
             <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Mini ATS</h2>
             <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
@@ -488,11 +489,7 @@ export const LoginView: React.FC = () => {
           {/* Header pill & ATS Emblem */}
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-indigo-800 flex items-center justify-center shadow-xl shadow-indigo-500/20 ring-1 ring-white/20">
-              <svg viewBox="0 0 100 100" className="w-8 h-8 text-white fill-current">
-                <ellipse cx="50" cy="50" rx="42" ry="24" fill="none" stroke="currentColor" strokeWidth="4" strokeDasharray="170 30" />
-                <text x="50" y="56" textAnchor="middle" fontWeight="900" fontSize="20" letterSpacing="1.5" fill="currentColor">ATS</text>
-                <path d="M 32 68 L 38 68 M 42 68 L 48 68 M 52 68 L 58 68 M 62 68 L 68 68" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-              </svg>
+              <AtsLogo className="w-8 h-8 text-white" />
             </div>
             <div>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-400/25">

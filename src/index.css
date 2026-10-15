@@ -265,6 +265,11 @@ select option {
   background-color: #000000 !important;
 }
 
+.theme-midnight .login-screen {
+  background-image: none !important;
+  background-color: #031114 !important;
+}
+
 .theme-light .brand-mark {
   background-color: #2563eb;
   color: #ffffff;

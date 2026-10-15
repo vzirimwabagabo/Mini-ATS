@@ -492,27 +492,27 @@ export const LoginView: React.FC = () => {
               <AtsLogo className="w-8 h-8 text-white" />
             </div>
             <div>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/15 text-indigo-300 border border-indigo-400/25">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-400/25">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                 Live Candidate Intelligence
               </span>
             </div>
           </div>
 
           <div>
-            <h1 className="text-3xl xl:text-4xl font-black text-white tracking-tight leading-tight">
+            <h1 className="text-3xl xl:text-4xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
               Hire the top 1% with{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-300">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-indigo-400 dark:via-purple-300 dark:to-pink-300">
                 AI-screened precision
               </span>.
             </h1>
-            <p className="mt-2 text-sm text-slate-300 leading-relaxed max-w-xl">
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl">
               Real-time resume ingestion, multi-dimensional candidate evaluation, calibrated stage recommendations, and high-velocity Kanban pipelines.
             </p>
           </div>
 
           {/* Floating Live Product Mockup Card (Maya Lin - Rank #1) */}
-          <div className="relative rounded-2xl p-5 bg-slate-900/80 backdrop-blur-xl border border-slate-700/80 shadow-2xl shadow-indigo-950/50 space-y-4">
+          <div className="relative rounded-2xl p-5 bg-white/95 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-700/80 shadow-xl dark:shadow-2xl dark:shadow-indigo-950/50 space-y-4 transition-colors">
             {/* Ambient card corner glow */}
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -522,98 +522,98 @@ export const LoginView: React.FC = () => {
                   <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-sm shadow">
                     ML
                   </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-slate-900" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-white text-sm">Maya Lin</span>
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400/15 text-amber-300 border border-amber-400/30">
-                      <Trophy className="w-3 h-3 text-amber-400" />
+                    <span className="font-bold text-slate-900 dark:text-white text-sm">Maya Lin</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 dark:bg-amber-400/15 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-400/30">
+                      <Trophy className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                       #1 Rank
                     </span>
                   </div>
-                  <span className="text-xs text-slate-400">Senior Full Stack Engineer</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Senior Full Stack Engineer</span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-extrabold text-xs">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 font-extrabold text-xs">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 94% Match
               </div>
             </div>
 
             {/* Dimensional Fit Breakdown */}
             <div className="grid grid-cols-3 gap-2.5 pt-1">
-              <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
-                <div className="text-[10px] text-slate-400 font-medium">Technical Depth</div>
-                <div className="text-xs font-bold text-slate-200 mt-0.5">96% • Exceptional</div>
-                <div className="w-full bg-slate-700/60 rounded-full h-1 mt-1.5 overflow-hidden">
-                  <div className="bg-indigo-400 h-1 rounded-full w-[96%]" />
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60">
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Technical Depth</div>
+                <div className="text-xs font-bold text-slate-900 dark:text-slate-200 mt-0.5">96% • Exceptional</div>
+                <div className="w-full bg-slate-200 dark:bg-slate-700/60 rounded-full h-1 mt-1.5 overflow-hidden">
+                  <div className="bg-blue-600 dark:bg-indigo-400 h-1 rounded-full w-[96%]" />
                 </div>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
-                <div className="text-[10px] text-slate-400 font-medium">Seniority Alignment</div>
-                <div className="text-xs font-bold text-slate-200 mt-0.5">94% • Strong Match</div>
-                <div className="w-full bg-slate-700/60 rounded-full h-1 mt-1.5 overflow-hidden">
-                  <div className="bg-purple-400 h-1 rounded-full w-[94%]" />
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60">
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Seniority Alignment</div>
+                <div className="text-xs font-bold text-slate-900 dark:text-slate-200 mt-0.5">94% • Strong Match</div>
+                <div className="w-full bg-slate-200 dark:bg-slate-700/60 rounded-full h-1 mt-1.5 overflow-hidden">
+                  <div className="bg-purple-600 dark:bg-purple-400 h-1 rounded-full w-[94%]" />
                 </div>
               </div>
-              <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60">
-                <div className="text-[10px] text-slate-400 font-medium">Quantified Impact</div>
-                <div className="text-xs font-bold text-slate-200 mt-0.5">92% • Metrics Driven</div>
-                <div className="w-full bg-slate-700/60 rounded-full h-1 mt-1.5 overflow-hidden">
-                  <div className="bg-emerald-400 h-1 rounded-full w-[92%]" />
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60">
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Quantified Impact</div>
+                <div className="text-xs font-bold text-slate-900 dark:text-slate-200 mt-0.5">92% • Metrics Driven</div>
+                <div className="w-full bg-slate-200 dark:bg-slate-700/60 rounded-full h-1 mt-1.5 overflow-hidden">
+                  <div className="bg-emerald-600 dark:bg-emerald-400 h-1 rounded-full w-[92%]" />
                 </div>
               </div>
             </div>
 
             {/* AI Recommendation Pill */}
-            <div className="flex items-center justify-between p-3 rounded-xl bg-indigo-950/60 border border-indigo-800/60 text-xs">
-              <div className="flex items-center gap-2 text-indigo-200">
-                <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="flex items-center justify-between p-3 rounded-xl bg-indigo-50/80 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 text-xs">
+              <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-200">
+                <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <div>
-                  <span className="font-bold text-white">AI Stage Recommendation:</span>{' '}
-                  <span className="text-slate-300">Advance candidate to</span>{' '}
-                  <span className="px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30 uppercase text-[10px]">
+                  <span className="font-bold text-slate-900 dark:text-white">AI Stage Recommendation:</span>{' '}
+                  <span className="text-slate-600 dark:text-slate-300">Advance candidate to</span>{' '}
+                  <span className="px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-bold border border-indigo-200 dark:border-indigo-500/30 uppercase text-[10px]">
                     Offer
                   </span>
                 </div>
               </div>
-              <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+              <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100/80 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-300 dark:border-emerald-500/20">
                 1-Click Advance
               </span>
             </div>
 
             {/* Pipeline Stage Tracker */}
-            <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+            <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80 flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-400">
               <div className="flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-indigo-400" />
+                <Layers className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                 <span>Live Pipeline Velocity</span>
               </div>
               <div className="flex items-center gap-2 text-[10px] font-mono">
-                <span className="text-slate-500">Sourced (14)</span>
+                <span className="text-slate-400 dark:text-slate-500">Sourced (14)</span>
                 <span>→</span>
-                <span className="text-slate-500">Screening (8)</span>
+                <span className="text-slate-400 dark:text-slate-500">Screening (8)</span>
                 <span>→</span>
-                <span className="text-slate-500">Interview (4)</span>
+                <span className="text-slate-400 dark:text-slate-500">Interview (4)</span>
                 <span>→</span>
-                <span className="text-emerald-400 font-bold">Offer (2)</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">Offer (2)</span>
               </div>
             </div>
           </div>
 
           {/* Three Feature Guarantees */}
           <div className="grid grid-cols-3 gap-3 pt-1">
-            <div className="flex items-center gap-2 text-xs text-slate-300">
-              <Shield className="w-4 h-4 text-indigo-400 shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+              <Shield className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
               <span>Row-Level Security (RLS)</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-300">
-              <Zap className="w-4 h-4 text-purple-400 shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+              <Zap className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
               <span>Dual-Engine AI Matching</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-slate-300">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>Zero-Leakage Privacy</span>
             </div>
           </div>

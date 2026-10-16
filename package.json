@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "test:security": "node --test tests/security.test.mjs",
+    "test:live-security": "node --test tests/live-security.test.mjs",
     "supabase:update": "supabase db push --linked --yes && supabase functions deploy admin-create-account",
     "deploy:pages": "npx wrangler pages deploy dist --project-name mini-ats",
     "preview": "vite preview"
